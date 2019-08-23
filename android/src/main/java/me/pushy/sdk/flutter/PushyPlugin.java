@@ -1,6 +1,7 @@
 package me.pushy.sdk.flutter;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -14,13 +15,13 @@ import org.json.JSONObject;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
-import io.flutter.app.FlutterActivity;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
+import io.flutter.view.FlutterView;
 import me.pushy.sdk.flutter.config.PushyChannels;
 import me.pushy.sdk.Pushy;
 import me.pushy.sdk.config.PushyLogging;
@@ -28,12 +29,12 @@ import me.pushy.sdk.util.exceptions.PushyException;
 import me.pushy.sdk.flutter.util.PushyPersistence;
 
 public class PushyPlugin implements MethodCallHandler, EventChannel.StreamHandler {
-    static FlutterActivity mActivity;
+    static Activity mActivity;
     static EventChannel.EventSink mNotificationListener;
 
     public static void registerWith(Registrar registrar) {
         // Instantiate plugin
-        PushyPlugin plugin = new PushyPlugin((FlutterActivity)registrar.activity());
+        PushyPlugin plugin = new PushyPlugin(registrar.activity());
 
         // Register a method channel that the Flutter app may invoke
         MethodChannel channel = new MethodChannel(registrar.messenger(), PushyChannels.METHOD_CHANNEL);
@@ -42,10 +43,30 @@ public class PushyPlugin implements MethodCallHandler, EventChannel.StreamHandle
         channel.setMethodCallHandler(plugin);
 
         // Register an event channel that the Flutter app may listen on
-        new EventChannel(mActivity.getFlutterView(), PushyChannels.EVENT_CHANNEL).setStreamHandler(plugin);
+        new EventChannel(getFlutterView(registrar.activity()), PushyChannels.EVENT_CHANNEL).setStreamHandler(plugin);
     }
 
-    private PushyPlugin(FlutterActivity activity) {
+    private static FlutterView getFlutterView(Activity activity) {
+        // Flutter view method reference
+        Method getFlutterView;
+
+        try {
+            // Get method reference via reflection (to support cases where Android Support libraries aren't included, we can't invoke it directly)
+            getFlutterView = activity.getClass().getMethod("getFlutterView");
+
+            // Return the flutter view
+            return (FlutterView)getFlutterView.invoke(activity);
+        } catch (Exception e) {
+            // Log error
+            Log.e(PushyLogging.TAG, "Failed to invoke getFlutterView() on parent activity", e);
+        }
+
+        // Return null view (will most likely crash the app)
+        return null;
+
+    }
+
+    private PushyPlugin(Activity activity) {
         // Store activity for later
         mActivity = activity;
     }
@@ -229,7 +250,7 @@ public class PushyPlugin implements MethodCallHandler, EventChannel.StreamHandle
 
         try {
             // Get method reference via reflection (to support earlier Android versions)
-            requestPermission = FlutterActivity.class.getMethod("requestPermissions", String[].class, int.class);
+            requestPermission = mActivity.getClass().getMethod("requestPermissions", String[].class, int.class);
 
             // Request the permission via user-friendly dialog
             requestPermission.invoke(mActivity, new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE }, 0);
