@@ -43,27 +43,7 @@ public class PushyPlugin implements MethodCallHandler, EventChannel.StreamHandle
         channel.setMethodCallHandler(plugin);
 
         // Register an event channel that the Flutter app may listen on
-        new EventChannel(getFlutterView(registrar.activity()), PushyChannels.EVENT_CHANNEL).setStreamHandler(plugin);
-    }
-
-    private static FlutterView getFlutterView(Activity activity) {
-        // Flutter view method reference
-        Method getFlutterView;
-
-        try {
-            // Get method reference via reflection (to support cases where Android Support libraries aren't included, we can't invoke it directly)
-            getFlutterView = activity.getClass().getMethod("getFlutterView");
-
-            // Return the flutter view
-            return (FlutterView)getFlutterView.invoke(activity);
-        } catch (Exception e) {
-            // Log error
-            Log.e(PushyLogging.TAG, "Failed to invoke getFlutterView() on parent activity", e);
-        }
-
-        // Return null view (will most likely crash the app)
-        return null;
-
+        new EventChannel(registrar.messenger(), PushyChannels.EVENT_CHANNEL).setStreamHandler(plugin);
     }
 
     private PushyPlugin(Activity activity) {
