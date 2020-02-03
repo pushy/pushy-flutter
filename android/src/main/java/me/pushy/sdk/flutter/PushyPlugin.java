@@ -95,6 +95,11 @@ public class PushyPlugin implements MethodCallHandler, EventChannel.StreamHandle
         if (call.method.equals("setNotificationIcon")) {
             setNotificationIcon(call, result);
         }
+
+        // Custom heartbeat interval support
+        if (call.method.equals("setHeartbeatInterval")) {
+            setHeartbeatInterval(call, result);
+        }
     }
 
     private void register(final Result result) {
@@ -265,6 +270,20 @@ public class PushyPlugin implements MethodCallHandler, EventChannel.StreamHandle
         PushyPersistence.setNotificationIcon(iconResourceName, mActivity);
 
         // Return success nonetheless
+        success(result, "success");
+    }
+
+    private void setHeartbeatInterval(MethodCall call, Result result) {
+        // Get arguments
+        final ArrayList<Integer> args = call.arguments();
+
+        // Get interval in ms
+        int interval = args.get(0);
+
+        // Modify heartbeat interval
+        Pushy.setHeartbeatInterval(interval, mActivity);
+
+        // Return success
         success(result, "success");
     }
 

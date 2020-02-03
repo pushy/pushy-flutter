@@ -69,6 +69,11 @@ class Pushy {
     _channel.invokeMethod('setNotificationIcon', <dynamic>[resourceName]);
   }
 
+  static void setHeartbeatInterval(int resourceName) {
+    // Invoke native method
+    _channel.invokeMethod('setHeartbeatInterval', <dynamic>[resourceName]);
+  }
+
   static void clearBadge() {
     // Invoke native method
     _channel.invokeMethod('clearBadge');
