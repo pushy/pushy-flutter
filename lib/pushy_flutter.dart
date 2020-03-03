@@ -64,6 +64,12 @@ class Pushy {
         'setEnterpriseConfig', <dynamic>[apiEndpoint, mqttEndpoint]);
   }
 
+  static void toggleNotifications(bool value) {
+    // Invoke native method
+    _channel.invokeMethod(
+        'toggleNotifications', <dynamic>[value]);
+  }
+
   static void setNotificationIcon(String resourceName) {
     // Invoke native method
     _channel.invokeMethod('setNotificationIcon', <dynamic>[resourceName]);

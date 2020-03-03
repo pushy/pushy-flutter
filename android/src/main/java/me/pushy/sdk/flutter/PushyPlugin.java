@@ -91,6 +91,11 @@ public class PushyPlugin implements MethodCallHandler, EventChannel.StreamHandle
             setEnterpriseConfig(call, result);
         }
 
+        // Toggle notifications support
+        if (call.method.equals("toggleNotifications")) {
+            toggleNotifications(call, result);
+        }
+
         // Custom icon support
         if (call.method.equals("setNotificationIcon")) {
             setNotificationIcon(call, result);
@@ -282,6 +287,20 @@ public class PushyPlugin implements MethodCallHandler, EventChannel.StreamHandle
 
         // Modify heartbeat interval
         Pushy.setHeartbeatInterval(interval, mActivity);
+
+        // Return success
+        success(result, "success");
+    }
+
+    private void toggleNotifications(MethodCall call, Result result) {
+        // Get arguments
+        final ArrayList<Boolean> args = call.arguments();
+
+        // Get toggle value as bool
+        Boolean value = args.get(0);
+
+        // Toggle notifications on/off
+        Pushy.toggleNotifications(value, mActivity);
 
         // Return success
         success(result, "success");
