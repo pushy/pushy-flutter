@@ -21,8 +21,16 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         // Create event channel for sending notifications to Flutter app
         let stream = FlutterEventChannel(name: PushyChannels.eventChannel, binaryMessenger: registrar.messenger())
         
+        // Registers the plugin as a receiver of UIApplicationDelegate calls
+        registrar.addApplicationDelegate(instance)
+        
         // Handle stream events in this class
         stream.setStreamHandler(instance)
+    }
+    
+    public func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) -> Bool {
+        // It seems this method declaration is necessary for handling notification tap while app is killed
+        return true
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -65,6 +73,9 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
     
     public override init() {
         super.init()
+        
+        // Print notification payload data
+        print("Pushy init() called")
         
         // Listen for startup notifications
         self.getPushyInstance().setNotificationHandler({ (data, completionHandler) in
