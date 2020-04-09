@@ -1,6 +1,7 @@
 package me.pushy.sdk.flutter;
 
 import me.pushy.sdk.Pushy;
+import me.pushy.sdk.flutter.config.PushyIntentExtras;
 import me.pushy.sdk.flutter.util.PushyPersistence;
 
 import android.app.Notification;
@@ -32,7 +33,7 @@ public class PushReceiver extends BroadcastReceiver {
                 .setVibrate(new long[]{0, 400, 250, 400})
                 .setSmallIcon(getNotificationIcon(context))
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-                .setContentIntent(getMainActivityPendingIntent(context));
+                .setContentIntent(getMainActivityPendingIntent(context, intent));
 
         // Get an instance of the NotificationManager service
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
@@ -82,12 +83,16 @@ public class PushReceiver extends BroadcastReceiver {
         return context.getPackageManager().getApplicationLabel(context.getApplicationInfo()).toString();
     }
 
-    private PendingIntent getMainActivityPendingIntent(Context context) {
+    private PendingIntent getMainActivityPendingIntent(Context context, Intent receiverIntent) {
         // Get launcher activity intent
         Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getApplicationContext().getPackageName());
 
         // Make sure to update the activity if it exists
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        // Pass payload data into PendingIntent
+        launchIntent.putExtra(PushyIntentExtras.NOTIFICATION_CLICKED, true);
+        launchIntent.putExtra(PushyIntentExtras.NOTIFICATION_PAYLOAD, PushyPersistence.getJSONObjectFromIntentExtras(receiverIntent).toString());
 
         // Convert intent into pending intent
         return PendingIntent.getActivity(context, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);

@@ -11,6 +11,12 @@ class Pushy {
   static const EventChannel _eventChannel =
       const EventChannel('me.pushy.sdk.flutter/events');
 
+  static NotificationCallback _notificationListener;
+  static NotificationCallback _notificationClickListener;
+
+  static var notificationQueue = [];
+  static var notificationClickQueue = [];
+
   static Future<String> register() async {
     // Register for push notifications
     return await _channel.invokeMethod('register');
@@ -19,6 +25,37 @@ class Pushy {
   static void listen() {
     // Invoke native method
     _channel.invokeMethod('listen');
+
+    // Listen for notifications published on event channel
+    _eventChannel.receiveBroadcastStream().listen((dynamic data) {
+      // Decode JSON string into map
+      Map<String, dynamic> result = json.decode(data);
+
+      // Print debug log
+      print('Pushy notification received: $result');
+
+      // Notification clicked?
+      if (result['_pushyNotificationClicked'] != null) {
+        // Notification click listener defined?
+        if (_notificationClickListener != null) {
+          _notificationClickListener(result);
+        } else {
+          // Queue for later
+          notificationClickQueue.add(result);
+        }
+      } else {
+        // Notification received (not clicked)
+        if (_notificationListener != null) {
+          _notificationListener(result);
+        } else {
+          // Queue for later
+          notificationQueue.add(result);
+        }
+      }
+    }, onError: (dynamic error) {
+      // Print error
+      print('Error: ${error.message}');
+    });
   }
 
   static void requestStoragePermission() {
@@ -35,17 +72,30 @@ class Pushy {
   }
 
   static void setNotificationListener(NotificationCallback fn) {
-    // Listen for notifications published on event channel
-    _eventChannel.receiveBroadcastStream().listen((dynamic data) {
-      // Decode JSON string into map
-      Map<String, dynamic> result = json.decode(data);
+    // Save listener for later
+    _notificationListener = fn;
 
-      // Invoke callback
-      fn(result);
-    }, onError: (dynamic error) {
-      // Print error
-      print('Error: ${error.message}');
-    });
+    // Any notifications pending?
+    if (notificationQueue.length > 0) {
+      notificationQueue.forEach((element) => {_notificationListener(element)});
+
+      // Empty queue
+      notificationQueue = [];
+    }
+  }
+
+  static void setNotificationClickListener(NotificationCallback fn) {
+    // Save listener for later
+    _notificationClickListener = fn;
+
+    // Any notifications pending?
+    if (notificationClickQueue.length > 0) {
+      notificationClickQueue
+          .forEach((element) => {_notificationClickListener(element)});
+
+      // Empty queue
+      notificationClickQueue = [];
+    }
   }
 
   static Future<String> subscribe(String topic) async {
@@ -66,8 +116,7 @@ class Pushy {
 
   static void toggleNotifications(bool value) {
     // Invoke native method
-    _channel.invokeMethod(
-        'toggleNotifications', <dynamic>[value]);
+    _channel.invokeMethod('toggleNotifications', <dynamic>[value]);
   }
 
   static void setNotificationIcon(String resourceName) {

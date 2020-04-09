@@ -3,6 +3,7 @@ package me.pushy.sdk.flutter;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
@@ -20,15 +21,18 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 import io.flutter.view.FlutterView;
 import me.pushy.sdk.flutter.config.PushyChannels;
 import me.pushy.sdk.Pushy;
 import me.pushy.sdk.config.PushyLogging;
+import me.pushy.sdk.flutter.config.PushyIntentExtras;
+import me.pushy.sdk.util.PushyStringUtils;
 import me.pushy.sdk.util.exceptions.PushyException;
 import me.pushy.sdk.flutter.util.PushyPersistence;
 
-public class PushyPlugin implements MethodCallHandler, EventChannel.StreamHandler {
+public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentListener, EventChannel.StreamHandler {
     static Activity mActivity;
     static EventChannel.EventSink mNotificationListener;
 
@@ -42,13 +46,64 @@ public class PushyPlugin implements MethodCallHandler, EventChannel.StreamHandle
         // Instantiate Pushy plugin
         channel.setMethodCallHandler(plugin);
 
+        // Listen for new intents (notification clicked)
+        registrar.addNewIntentListener(plugin);
+
         // Register an event channel that the Flutter app may listen on
         new EventChannel(registrar.messenger(), PushyChannels.EVENT_CHANNEL).setStreamHandler(plugin);
+    }
+
+    @Override
+    public boolean onNewIntent(Intent intent) {
+        // Handle notification click
+        onNotificationClicked(mActivity, intent);
+
+        // Handled
+        return true;
     }
 
     private PushyPlugin(Activity activity) {
         // Store activity for later
         mActivity = activity;
+    }
+
+    void onNotificationClicked(Activity activity, Intent intent) {
+        // Activity is not running?
+        if (activity == null || activity.isFinishing()) {
+            return;
+        }
+
+        // Not a clicked Pushy notification?
+        if (!intent.getBooleanExtra(PushyIntentExtras.NOTIFICATION_CLICKED, false) ) {
+            return;
+        }
+
+        // Attempt to extract stringified JSON payload
+        String payload = intent.getStringExtra(PushyIntentExtras.NOTIFICATION_PAYLOAD);
+
+        // No payload?
+        if (PushyStringUtils.stringIsNullOrEmpty(payload)) {
+            return;
+        }
+
+        // Notification payload object
+        JSONObject notification;
+
+        try {
+            // Gracefully attempt to parse it back into JSONObject
+            notification = new JSONObject(payload);
+
+            // Mark notification as clicked
+            notification.put(PushyIntentExtras.NOTIFICATION_CLICKED, true);
+        }
+        catch (Exception e) {
+            // Log error to logcat and stop execution
+            Log.e(PushyLogging.TAG, "Failed to parse notification click data into JSONObject:" + e.getMessage(), e);
+            return;
+        }
+
+        // Invoke the notification clicked handler
+        onNotificationReceived(notification, activity);
     }
 
     @Override

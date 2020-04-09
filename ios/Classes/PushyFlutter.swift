@@ -127,14 +127,23 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         // Check for startup notification if exists
         if self.hasStartupNotification {
             // Execute notification handler accordingly
-            self.notificationHandler(data: self.startupNotification!, completionHandler: {(UIBackgroundFetchResult) in})
+            self.notificationHandler(userInfo: self.startupNotification!, completionHandler: {(UIBackgroundFetchResult) in})
         }
         
         // Nil means success
         return nil
     }
     
-    func notificationHandler(data: [AnyHashable : Any], completionHandler: ((UIBackgroundFetchResult) -> Void)) {
+    func notificationHandler(userInfo: [AnyHashable : Any], completionHandler: ((UIBackgroundFetchResult) -> Void)) {
+        // Make userInfo mutable
+        var data = userInfo;
+        
+        // Notification clicked?
+        if (UIApplication.shared.applicationState == UIApplication.State.inactive) {
+            // Set flag for invoking click listener
+            data["_pushyNotificationClicked"] = true;
+        }
+        
         // Print notification payload data
         print("Received notification: \(data)")
         

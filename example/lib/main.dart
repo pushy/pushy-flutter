@@ -77,10 +77,10 @@ class _PushyDemoState extends State<PushyDemo> {
       });
     }
 
-    // Listen for push notifications
+    // Listen for push notifications received
     Pushy.setNotificationListener((Map<String, dynamic> data) {
       // Print notification payload data
-      print('Received notifications: $data');
+      print('Received notification: $data');
 
       // Clear iOS app badge number
       Pushy.clearBadge();
@@ -105,6 +105,36 @@ class _PushyDemoState extends State<PushyDemo> {
               ]);
         },
       );
+    });
+
+    // Listen for push notification clicked
+    Pushy.setNotificationClickListener((Map<String, dynamic> data) {
+      // Print notification payload data
+      print('Notification clicked: $data');
+
+      // Extract notification messsage
+      String message = data['message'] ?? 'Hello World!';
+
+      // Display an alert with the "message" payload value
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              title: Text('Notification clicked'),
+              content: Text(message),
+              actions: [
+                FlatButton(
+                  child: Text('OK'),
+                  onPressed: () {
+                    Navigator.of(context, rootNavigator: true).pop('dialog');
+                  },
+                )
+              ]);
+        },
+      );
+
+      // Clear iOS app badge number
+      Pushy.clearBadge();
     });
   }
 
