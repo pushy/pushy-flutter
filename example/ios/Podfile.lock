@@ -1,7 +1,7 @@
 PODS:
   - Flutter (1.0.0)
   - Pushy (1.0.21)
-  - pushy_flutter (1.0.6):
+  - pushy_flutter (1.0.7):
     - Flutter
     - Pushy (= 1.0.21)
 
