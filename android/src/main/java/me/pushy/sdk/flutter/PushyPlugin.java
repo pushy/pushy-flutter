@@ -23,7 +23,7 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
-import io.flutter.view.FlutterView;
+
 import me.pushy.sdk.flutter.config.PushyChannels;
 import me.pushy.sdk.Pushy;
 import me.pushy.sdk.config.PushyLogging;
@@ -191,6 +191,9 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
 
         // Attempt to deliver any pending notifications (from when activity was closed)
         deliverPendingNotifications();
+
+        // If app was opened from notification, invoke notification click listener
+        onNotificationClicked(mActivity, mActivity.getIntent());
     }
 
     @Override
