@@ -74,11 +74,14 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
     public override init() {
         super.init()
         
-        // Print notification payload data
-        print("Pushy init() called")
-        
         // Listen for startup notifications
-        self.getPushyInstance().setNotificationHandler({ (data, completionHandler) in
+        self.getPushyInstance().setNotificationHandler({ (userInfo, completionHandler) in
+            // Make userInfo mutable
+            var data = userInfo;
+            
+            // Startup notifications have always been clicked
+            data["_pushyNotificationClicked"] = true;
+            
             // Print notification payload data
             print("Received notification: \(data)")
             
