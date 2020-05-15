@@ -33,12 +33,12 @@ import me.pushy.sdk.util.exceptions.PushyException;
 import me.pushy.sdk.flutter.util.PushyPersistence;
 
 public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentListener, EventChannel.StreamHandler {
-    static Activity mActivity;
+    static Registrar mRegistrar;
     static EventChannel.EventSink mNotificationListener;
 
     public static void registerWith(Registrar registrar) {
         // Instantiate plugin
-        PushyPlugin plugin = new PushyPlugin(registrar.activity());
+        PushyPlugin plugin = new PushyPlugin(registrar);
 
         // Register a method channel that the Flutter app may invoke
         MethodChannel channel = new MethodChannel(registrar.messenger(), PushyChannels.METHOD_CHANNEL);
@@ -56,15 +56,15 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
     @Override
     public boolean onNewIntent(Intent intent) {
         // Handle notification click
-        onNotificationClicked(mActivity, intent);
+        onNotificationClicked(mRegistrar.activity(), intent);
 
         // Handled
         return true;
     }
 
-    private PushyPlugin(Activity activity) {
-        // Store activity for later
-        mActivity = activity;
+    private PushyPlugin(Registrar registrar) {
+        // Store registrar for later
+        mRegistrar = registrar;
     }
 
     void onNotificationClicked(Activity activity, Intent intent) {
@@ -110,7 +110,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
     public void onMethodCall(MethodCall call, Result result) {
         // // Restart the socket service
         if (call.method.equals("listen")) {
-            Pushy.listen(mActivity);
+            Pushy.listen(mRegistrar.context());
 
             // Send success result
             success(result, "success");
@@ -169,7 +169,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
             public void run() {
                 try {
                     // Assign a unique token to this device
-                    String deviceToken = Pushy.register(mActivity);
+                    String deviceToken = Pushy.register(mRegistrar.context());
 
                     // Resolve the promise with the token
                     success(result, deviceToken);
@@ -192,8 +192,11 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         // Attempt to deliver any pending notifications (from when activity was closed)
         deliverPendingNotifications();
 
-        // If app was opened from notification, invoke notification click listener
-        onNotificationClicked(mActivity, mActivity.getIntent());
+        // Activity not null?
+        if (mRegistrar.activity() != null) {
+            // If app was opened from notification, invoke notification click listener
+            onNotificationClicked(mRegistrar.activity(), mRegistrar.activity().getIntent());
+        }
     }
 
     @Override
@@ -204,12 +207,12 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
 
     private void deliverPendingNotifications() {
         // Activity must be running for this to work
-        if (mActivity == null || mActivity.isFinishing()) {
+        if (mRegistrar == null || mRegistrar.activity() == null || mRegistrar.activity().isFinishing()) {
             return;
         }
 
         // Get pending notifications
-        JSONArray notifications = PushyPersistence.getPendingNotifications(mActivity);
+        JSONArray notifications = PushyPersistence.getPendingNotifications(mRegistrar.context());
 
         // Got at least one?
         if (notifications.length() > 0) {
@@ -217,7 +220,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
             for (int i = 0; i < notifications.length(); i++) {
                 try {
                     // Emit notification to listener
-                    onNotificationReceived(notifications.getJSONObject(i), mActivity);
+                    onNotificationReceived(notifications.getJSONObject(i), mRegistrar.context());
                 }
                 catch (JSONException e) {
                     // Log error to logcat
@@ -226,13 +229,13 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
             }
 
             // Clear persisted notifications
-            PushyPersistence.clearPendingNotifications(mActivity);
+            PushyPersistence.clearPendingNotifications(mRegistrar.context());
         }
     }
 
     public static void onNotificationReceived(final JSONObject notification, Context context) {
         // Activity is not running or no notification handler defined?
-        if (mNotificationListener == null || mActivity == null || mActivity.isFinishing()) {
+        if (mNotificationListener == null || mRegistrar == null || mRegistrar.activity() == null || mRegistrar.activity().isFinishing()) {
             // Store notification JSON in SharedPreferences and deliver it when app is opened
             PushyPersistence.persistNotification(notification, context);
             return;
@@ -258,7 +261,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
             public void run() {
                 try {
                     // Attempt to subscribe the device to topic
-                    Pushy.subscribe(args.get(0), mActivity);
+                    Pushy.subscribe(args.get(0), mRegistrar.context());
 
                     // Resolve the callback with success
                     success(result, "success");
@@ -280,7 +283,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
             public void run() {
                 try {
                     // Attempt to unsubscribe the device from topic
-                    Pushy.unsubscribe(args.get(0), mActivity);
+                    Pushy.unsubscribe(args.get(0), mRegistrar.context());
 
                     // Resolve the callback with success
                     success(result, "success");
@@ -298,10 +301,10 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
 
         try {
             // Get method reference via reflection (to support earlier Android versions)
-            requestPermission = mActivity.getClass().getMethod("requestPermissions", String[].class, int.class);
+            requestPermission = mRegistrar.activity().getClass().getMethod("requestPermissions", String[].class, int.class);
 
             // Request the permission via user-friendly dialog
-            requestPermission.invoke(mActivity, new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE }, 0);
+            requestPermission.invoke(mRegistrar.activity(), new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE }, 0);
         } catch (Exception e) {
             // Log error
             Log.d(PushyLogging.TAG, "Failed to request WRITE_EXTERNAL_STORAGE permission", e);
@@ -316,7 +319,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         final ArrayList<String> args = call.arguments();
 
         // Set enterprise config based on passed in args
-        Pushy.setEnterpriseConfig(args.get(0), args.get(1), mActivity);
+        Pushy.setEnterpriseConfig(args.get(0), args.get(1), mRegistrar.context());
 
         // Return success nonetheless
         success(result, "success");
@@ -330,7 +333,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         String iconResourceName = args.get(0);
 
         // Store in SharedPreferences using PushyPersistence helper
-        PushyPersistence.setNotificationIcon(iconResourceName, mActivity);
+        PushyPersistence.setNotificationIcon(iconResourceName, mRegistrar.context());
 
         // Return success nonetheless
         success(result, "success");
@@ -344,7 +347,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         int interval = args.get(0);
 
         // Modify heartbeat interval
-        Pushy.setHeartbeatInterval(interval, mActivity);
+        Pushy.setHeartbeatInterval(interval, mRegistrar.context());
 
         // Return success
         success(result, "success");
@@ -358,7 +361,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         Boolean value = args.get(0);
 
         // Toggle notifications on/off
-        Pushy.toggleNotifications(value, mActivity);
+        Pushy.toggleNotifications(value, mRegistrar.context());
 
         // Return success
         success(result, "success");
@@ -366,7 +369,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
 
     private void isRegistered(Result result) {
         // Resolve the event with boolean result
-        success(result, Pushy.isRegistered(mActivity) ? "true" : "false");
+        success(result, Pushy.isRegistered(mRegistrar.context()) ? "true" : "false");
     }
 
     void success(final Result result, final String message) {
