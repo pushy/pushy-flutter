@@ -133,4 +133,23 @@ class Pushy {
     // Invoke native method
     _channel.invokeMethod('clearBadge');
   }
+
+  static Future<Object> getDeviceCredentials() async {
+    // Fetch device credentials as list
+    List result = await _channel.invokeMethod('getDeviceCredentials');
+
+    // Return null if device not registered yet
+    if (result == null) {
+      return result;
+    }
+  
+    // Convert list to map of {token, authKey}
+    return {'token': result[0], 'authKey': result[1]};
+  }
+
+  static Future<String> setDeviceCredentials(Map credentials) async {
+    // Attempt to assign device credentials
+    return await _channel.invokeMethod('setDeviceCredentials', <dynamic>[credentials['token'], credentials['authKey']]);
+  }
+
 }

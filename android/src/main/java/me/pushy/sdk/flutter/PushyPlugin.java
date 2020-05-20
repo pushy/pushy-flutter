@@ -15,6 +15,7 @@ import org.json.JSONObject;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
@@ -27,6 +28,7 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
 import me.pushy.sdk.flutter.config.PushyChannels;
 import me.pushy.sdk.Pushy;
 import me.pushy.sdk.config.PushyLogging;
+import me.pushy.sdk.model.PushyDeviceCredentials;
 import me.pushy.sdk.flutter.config.PushyIntentExtras;
 import me.pushy.sdk.util.PushyStringUtils;
 import me.pushy.sdk.util.exceptions.PushyException;
@@ -160,6 +162,16 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         if (call.method.equals("setHeartbeatInterval")) {
             setHeartbeatInterval(call, result);
         }
+
+        // Device credential retrieval support
+        if (call.method.equals("getDeviceCredentials")) {
+            getDeviceCredentials(result);
+        }
+
+        // Device credential assignment support
+        if (call.method.equals("setDeviceCredentials")) {
+            setDeviceCredentials(call, result);
+        }
     }
 
     private void register(final Result result) {
@@ -173,6 +185,42 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
 
                     // Resolve the promise with the token
                     success(result, deviceToken);
+                } catch (final PushyException exc) {
+                    // Reject the promise with the exception
+                    error(result, exc.getMessage());
+                }
+            }
+        });
+    }
+
+    private void getDeviceCredentials(final Result result) {
+        // Get device unique credentials (may be null)
+        PushyDeviceCredentials credentials = Pushy.getDeviceCredentials(mRegistrar.context());
+
+        // Convert to ArrayList<String>
+        ArrayList<String> list = new ArrayList<>(Arrays.asList(credentials.token, credentials.authKey));
+
+        // Resolve the promise with credentials
+        success(result, list);
+    }
+
+    private void setDeviceCredentials(final MethodCall call, final Result result) {
+        // Get arguments
+        ArrayList<String> args = call.arguments();
+
+        // Create credentials object
+        final PushyDeviceCredentials credentials = new PushyDeviceCredentials(args.get(0), args.get(1));
+
+        // Run network I/O in background thread
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // Assign credentials for this device (may fail)
+                    Pushy.setDeviceCredentials(credentials, mRegistrar.context());
+
+                    // Resolve the promise successfully
+                    success(result, null);
                 } catch (final PushyException exc) {
                     // Reject the promise with the exception
                     error(result, exc.getMessage());
@@ -372,7 +420,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         success(result, Pushy.isRegistered(mRegistrar.context()) ? "true" : "false");
     }
 
-    void success(final Result result, final String message) {
+    void success(final Result result, final Object message) {
         // Run on main thread
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
