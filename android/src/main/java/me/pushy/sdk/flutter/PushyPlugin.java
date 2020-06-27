@@ -415,6 +415,20 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         success(result, "success");
     }
 
+    private void toggleFCM(MethodCall call, Result result) {
+        // Get arguments
+        final ArrayList<Boolean> args = call.arguments();
+
+        // Get toggle value as bool
+        Boolean value = args.get(0);
+
+        // Toggle FCM on/off
+        Pushy.toggleFCM(value, mRegistrar.context());
+
+        // Return success
+        success(result, "success");
+    }
+
     private void isRegistered(Result result) {
         // Resolve the event with boolean result
         success(result, Pushy.isRegistered(mRegistrar.context()) ? "true" : "false");

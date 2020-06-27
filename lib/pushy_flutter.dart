@@ -114,6 +114,11 @@ class Pushy {
         'setEnterpriseConfig', <dynamic>[apiEndpoint, mqttEndpoint]);
   }
 
+  static void toggleFCM(bool value) {
+    // Invoke native method
+    _channel.invokeMethod('toggleFCM', <dynamic>[value]);
+  }
+
   static void toggleNotifications(bool value) {
     // Invoke native method
     _channel.invokeMethod('toggleNotifications', <dynamic>[value]);
