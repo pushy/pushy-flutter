@@ -186,10 +186,10 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         let message = args[1];
         
         // Display the notification as an alert
-        let alert = UIAlertController(title: title, message: message, preferredStyle: UIAlertControllerStyle.alert)
+        let alert = UIAlertController(title: title, message: message, preferredStyle: UIAlertController.Style.alert)
         
         // Add an action button
-        alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
+        alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
         
         // Show the alert dialog
         UIApplication.shared.delegate?.window??.rootViewController?.present(alert, animated: true, completion: nil)
