@@ -7,6 +7,27 @@ import 'package:pushy_flutter/pushy_flutter.dart';
 
 void main() => runApp(Main());
 
+// Please place this code in main.dart,
+// After the import statements, and outside any Widget class (top-level)
+
+void backgroundNotificationListener(Map<String, dynamic> data) {
+  // Print notification payload data
+  print('Received notification: $data');
+
+  // Notification title
+  String notificationTitle = 'MyApp';
+
+  // Attempt to extract the "message" property from the payload: {"message":"Hello World!"}
+  String notificationText = data['message'] ?? 'Hello World!';
+
+  // Android: Displays a system notification
+  // iOS: Displays an alert dialog
+  Pushy.notify(notificationTitle, notificationText, data);
+
+  // Clear iOS app badge number
+  Pushy.clearBadge();
+}
+
 class Main extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -78,34 +99,7 @@ class _PushyDemoState extends State<PushyDemo> {
     }
 
     // Listen for push notifications received
-    Pushy.setNotificationListener((Map<String, dynamic> data) {
-      // Print notification payload data
-      print('Received notification: $data');
-
-      // Clear iOS app badge number
-      Pushy.clearBadge();
-
-      // Extract notification messsage
-      String message = data['message'] ?? 'Hello World!';
-
-      // Display an alert with the "message" payload value
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-              title: Text('Pushy'),
-              content: Text(message),
-              actions: [
-                FlatButton(
-                  child: Text('OK'),
-                  onPressed: () {
-                    Navigator.of(context, rootNavigator: true).pop('dialog');
-                  },
-                )
-              ]);
-        },
-      );
-    });
+    Pushy.setNotificationListener(backgroundNotificationListener);
 
     // Listen for push notification clicked
     Pushy.setNotificationClickListener((Map<String, dynamic> data) {

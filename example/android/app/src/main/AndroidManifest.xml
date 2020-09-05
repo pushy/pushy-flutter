@@ -32,15 +32,6 @@
 
         <!-- Pushy Declarations -->
 
-        <!-- Pushy Notification Receiver -->
-        <!-- Incoming push notifications will invoke the following BroadcastReceiver -->
-        <receiver android:name="me.pushy.sdk.flutter.PushReceiver" android:exported="false">
-            <intent-filter>
-                <!-- Do not modify this -->
-                <action android:name="pushy.me" />
-            </intent-filter>
-        </receiver>
-
         <!-- Internal Notification Receiver -->
         <!-- Do not modify - internal BroadcastReceiver that sends notifications to your Flutter app -->
         <receiver android:name="me.pushy.sdk.flutter.internal.PushyInternalReceiver" android:exported="false">

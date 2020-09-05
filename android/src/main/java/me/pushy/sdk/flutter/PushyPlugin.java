@@ -1,9 +1,11 @@
 package me.pushy.sdk.flutter;
 
 import android.Manifest;
-import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.media.RingtoneManager;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
@@ -28,6 +30,8 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
 import me.pushy.sdk.flutter.config.PushyChannels;
 import me.pushy.sdk.Pushy;
 import me.pushy.sdk.config.PushyLogging;
+import me.pushy.sdk.flutter.util.PushyFlutterBackgroundExecutor;
+import me.pushy.sdk.flutter.util.PushyNotification;
 import me.pushy.sdk.model.PushyDeviceCredentials;
 import me.pushy.sdk.flutter.config.PushyIntentExtras;
 import me.pushy.sdk.util.PushyStringUtils;
@@ -35,8 +39,9 @@ import me.pushy.sdk.util.exceptions.PushyException;
 import me.pushy.sdk.flutter.util.PushyPersistence;
 
 public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentListener, EventChannel.StreamHandler {
+    static Context mContext;
     static Registrar mRegistrar;
-    static EventChannel.EventSink mNotificationListener;
+    static EventChannel.EventSink mNotificationClickListener;
 
     public static void registerWith(Registrar registrar) {
         // Instantiate plugin
@@ -58,25 +63,21 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
     @Override
     public boolean onNewIntent(Intent intent) {
         // Handle notification click
-        onNotificationClicked(mRegistrar.activity(), intent);
+        onNotificationClicked(mContext, intent);
 
         // Handled
         return true;
     }
 
     private PushyPlugin(Registrar registrar) {
-        // Store registrar for later
+        // Store registrar and context for later
         mRegistrar = registrar;
+        mContext = registrar.context();
     }
 
-    void onNotificationClicked(Activity activity, Intent intent) {
-        // Activity is not running?
-        if (activity == null || activity.isFinishing()) {
-            return;
-        }
-
+    void onNotificationClicked(Context context, Intent intent) {
         // Not a clicked Pushy notification?
-        if (!intent.getBooleanExtra(PushyIntentExtras.NOTIFICATION_CLICKED, false) ) {
+        if (!intent.getBooleanExtra(PushyIntentExtras.NOTIFICATION_CLICKED, false)) {
             return;
         }
 
@@ -97,22 +98,27 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
 
             // Mark notification as clicked
             notification.put(PushyIntentExtras.NOTIFICATION_CLICKED, true);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             // Log error to logcat and stop execution
             Log.e(PushyLogging.TAG, "Failed to parse notification click data into JSONObject:" + e.getMessage(), e);
             return;
         }
 
-        // Invoke the notification clicked handler
-        onNotificationReceived(notification, activity);
+        // No listener defined yet?
+        if (mNotificationClickListener == null) {
+            Log.d(PushyLogging.TAG, "No notification click listener is currently registered");
+            return;
+        }
+
+        // Invoke the notification clicked handler (via EventChannel)
+        mNotificationClickListener.success(notification.toString());
     }
 
     @Override
     public void onMethodCall(MethodCall call, Result result) {
-        // // Restart the socket service
+        // // Start the socket service
         if (call.method.equals("listen")) {
-            Pushy.listen(mRegistrar.context());
+            Pushy.listen(mContext);
 
             // Send success result
             success(result, "success");
@@ -121,6 +127,11 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         // Register the device for notifications
         if (call.method.equals("register")) {
             register(result);
+        }
+
+        // Background notification listener
+        if (call.method.equals("setNotificationListener")) {
+            setNotificationListener(call, result);
         }
 
         // Request WRITE_EXTERNAL_STORAGE permission
@@ -133,6 +144,11 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
             isRegistered(result);
         }
 
+        // Display a system notification
+        if (call.method.equals("notify")) {
+            notify(call, result);
+        }
+
         // Subscribe device to topic
         if (call.method.equals("subscribe")) {
             subscribe(call, result);
@@ -141,6 +157,11 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         // Unsubscribe device from topic
         if (call.method.equals("unsubscribe")) {
             unsubscribe(call, result);
+        }
+
+        // FCM fallback delivery
+        if (call.method.equals("toggleFCM")) {
+            toggleFCM(call, result);
         }
 
         // Pushy Enterprise support
@@ -181,7 +202,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
             public void run() {
                 try {
                     // Assign a unique token to this device
-                    String deviceToken = Pushy.register(mRegistrar.context());
+                    String deviceToken = Pushy.register(mContext);
 
                     // Resolve the promise with the token
                     success(result, deviceToken);
@@ -195,7 +216,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
 
     private void getDeviceCredentials(final Result result) {
         // Get device unique credentials (may be null)
-        PushyDeviceCredentials credentials = Pushy.getDeviceCredentials(mRegistrar.context());
+        PushyDeviceCredentials credentials = Pushy.getDeviceCredentials(mContext);
 
         // Convert to ArrayList<String>
         ArrayList<String> list = new ArrayList<>(Arrays.asList(credentials.token, credentials.authKey));
@@ -217,7 +238,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
             public void run() {
                 try {
                     // Assign credentials for this device (may fail)
-                    Pushy.setDeviceCredentials(credentials, mRegistrar.context());
+                    Pushy.setDeviceCredentials(credentials, mContext);
 
                     // Resolve the promise successfully
                     success(result, null);
@@ -231,14 +252,11 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
 
     @Override
     public void onListen(Object args, final EventChannel.EventSink events) {
-        // Flutter app is listening for notifications
-        Log.w("Pushy", "Flutter app is listening for notifications");
+        // Flutter app is listening for notification click
+        Log.w("Pushy", "Flutter app is listening for notification click event");
 
         // Store handle for later
-        mNotificationListener = events;
-
-        // Attempt to deliver any pending notifications (from when activity was closed)
-        deliverPendingNotifications();
+        mNotificationClickListener = events;
 
         // Activity not null?
         if (mRegistrar.activity() != null) {
@@ -250,17 +268,12 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
     @Override
     public void onCancel(Object args) {
         // Clear notification listener
-        mNotificationListener = null;
+        mNotificationClickListener = null;
     }
 
-    private void deliverPendingNotifications() {
-        // Activity must be running for this to work
-        if (mRegistrar == null || mRegistrar.activity() == null || mRegistrar.activity().isFinishing()) {
-            return;
-        }
-
+    public static void deliverPendingNotifications(Context context) {
         // Get pending notifications
-        JSONArray notifications = PushyPersistence.getPendingNotifications(mRegistrar.context());
+        JSONArray notifications = PushyPersistence.getPendingNotifications(context);
 
         // Got at least one?
         if (notifications.length() > 0) {
@@ -268,7 +281,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
             for (int i = 0; i < notifications.length(); i++) {
                 try {
                     // Emit notification to listener
-                    onNotificationReceived(notifications.getJSONObject(i), mRegistrar.context());
+                    onNotificationReceived(notifications.getJSONObject(i), context);
                 }
                 catch (JSONException e) {
                     // Log error to logcat
@@ -277,24 +290,30 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
             }
 
             // Clear persisted notifications
-            PushyPersistence.clearPendingNotifications(mRegistrar.context());
+            PushyPersistence.clearPendingNotifications(context);
         }
     }
 
-    public static void onNotificationReceived(final JSONObject notification, Context context) {
-        // Activity is not running or no notification handler defined?
-        if (mNotificationListener == null || mRegistrar == null || mRegistrar.activity() == null || mRegistrar.activity().isFinishing()) {
-            // Store notification JSON in SharedPreferences and deliver it when app is opened
-            PushyPersistence.persistNotification(notification, context);
-            return;
-        }
-
+    public static void onNotificationReceived(final JSONObject notification, final Context context) {
         // Run on main thread
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
-                // Invoke with notification payload
-                mNotificationListener.success(notification.toString());
+                // Activity is not running or no notification handler defined?
+                if (!PushyFlutterBackgroundExecutor.isRunning()) {
+                    // Start background isolate
+                    PushyFlutterBackgroundExecutor.getSingletonInstance().startBackgroundIsolate(context);
+
+                    // Store notification JSON in SharedPreferences and deliver it when isolate ready
+                    PushyPersistence.persistNotification(notification, context);
+                }
+                else {
+                    // Log action
+                    Log.d("Pushy", "Handling incoming notification in Dart code");
+
+                    // Run on background executor
+                    PushyFlutterBackgroundExecutor.getSingletonInstance().invokeDartNotificationHandler(notification, context);
+                }
             }
         });
     }
@@ -309,7 +328,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
             public void run() {
                 try {
                     // Attempt to subscribe the device to topic
-                    Pushy.subscribe(args.get(0), mRegistrar.context());
+                    Pushy.subscribe(args.get(0), mContext);
 
                     // Resolve the callback with success
                     success(result, "success");
@@ -331,7 +350,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
             public void run() {
                 try {
                     // Attempt to unsubscribe the device from topic
-                    Pushy.unsubscribe(args.get(0), mRegistrar.context());
+                    Pushy.unsubscribe(args.get(0), mContext);
 
                     // Resolve the callback with success
                     success(result, "success");
@@ -367,10 +386,31 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         final ArrayList<String> args = call.arguments();
 
         // Set enterprise config based on passed in args
-        Pushy.setEnterpriseConfig(args.get(0), args.get(1), mRegistrar.context());
+        Pushy.setEnterpriseConfig(args.get(0), args.get(1), mContext);
 
         // Return success nonetheless
         success(result, "success");
+    }
+
+    private void setNotificationListener(MethodCall call, Result result) {
+        // Get arguments as list
+        final ArrayList<Long> args = call.arguments();
+
+        // Get callback handles (_isolate and notification handler)
+        long isolateCallback = args.get(0);
+        long notificationHandlerCallback = args.get(1);
+
+        // Start background isolate (if not already started)
+        if (!PushyFlutterBackgroundExecutor.isRunning()) {
+            PushyFlutterBackgroundExecutor.getSingletonInstance().startBackgroundIsolate(mContext, isolateCallback, notificationHandlerCallback);
+        }
+        else {
+            // Persist callback handles in SharedPreferences
+            PushyFlutterBackgroundExecutor.persistCallbackHandleIds(mContext, isolateCallback, notificationHandlerCallback);
+        }
+
+        // Return success
+        success(result, true);
     }
 
     private void setNotificationIcon(MethodCall call, Result result) {
@@ -381,7 +421,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         String iconResourceName = args.get(0);
 
         // Store in SharedPreferences using PushyPersistence helper
-        PushyPersistence.setNotificationIcon(iconResourceName, mRegistrar.context());
+        PushyPersistence.setNotificationIcon(iconResourceName, mContext);
 
         // Return success nonetheless
         success(result, "success");
@@ -395,7 +435,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         int interval = args.get(0);
 
         // Modify heartbeat interval
-        Pushy.setHeartbeatInterval(interval, mRegistrar.context());
+        Pushy.setHeartbeatInterval(interval, mContext);
 
         // Return success
         success(result, "success");
@@ -409,7 +449,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         Boolean value = args.get(0);
 
         // Toggle notifications on/off
-        Pushy.toggleNotifications(value, mRegistrar.context());
+        Pushy.toggleNotifications(value, mContext);
 
         // Return success
         success(result, "success");
@@ -423,7 +463,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         Boolean value = args.get(0);
 
         // Toggle FCM on/off
-        Pushy.toggleFCM(value, mRegistrar.context());
+        Pushy.toggleFCM(value, mContext);
 
         // Return success
         success(result, "success");
@@ -431,7 +471,39 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
 
     private void isRegistered(Result result) {
         // Resolve the event with boolean result
-        success(result, Pushy.isRegistered(mRegistrar.context()) ? "true" : "false");
+        success(result, Pushy.isRegistered(mContext) ? "true" : "false");
+    }
+
+    public void notify(MethodCall call, Result result) {
+        // Get arguments
+        final ArrayList<String> args = call.arguments();
+
+        // Extract arguments
+        String title = args.get(0);
+        String text = args.get(1);
+        String payload = args.get(2);
+
+        // Prepare a notification with vibration, sound and lights
+        Notification.Builder builder = new Notification.Builder(mContext)
+                .setSmallIcon(PushyNotification.getNotificationIcon(mContext))
+                .setContentTitle(title)
+                .setContentText(text)
+                .setAutoCancel(true)
+                .setVibrate(new long[]{0, 400, 250, 400})
+                .setContentIntent(PushyNotification.getMainActivityPendingIntent(mContext, payload))
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+
+        // Get an instance of the NotificationManager service
+        NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(mContext.NOTIFICATION_SERVICE);
+
+        // Automatically configure a Notification Channel for devices running Android O+
+        Pushy.setNotificationChannel(builder, mContext);
+
+        // Build the notification and display it
+        notificationManager.notify(text.hashCode(), builder.build());
+
+        // Return success
+        success(result, true);
     }
 
     void success(final Result result, final Object message) {

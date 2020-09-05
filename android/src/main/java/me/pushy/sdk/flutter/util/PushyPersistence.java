@@ -20,7 +20,7 @@ public class PushyPersistence {
     public static final String NOTIFICATION_ICON = "pushyNotificationIcon";
     public static final String PENDING_NOTIFICATIONS = "pushyPendingNotifications";
 
-    private static SharedPreferences getSettings(Context context) {
+    public static SharedPreferences getSettings(Context context) {
         // Get default app SharedPreferences
         return PreferenceManager.getDefaultSharedPreferences(context);
     }

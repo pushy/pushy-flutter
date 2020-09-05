@@ -1,15 +1,25 @@
+import 'dart:ui';
+import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 
+// Type definitions for helpers
 typedef void NotificationCallback(Map<String, dynamic> data);
+typedef CallbackHandle _GetCallbackHandle(Function callback);
+
+// Define channel names
+const String _eventChannelName = 'me.pushy.sdk.flutter/events';
+const String _methodChannelName = 'me.pushy.sdk.flutter/methods';
+const String _backgroundChannelName = 'me.pushy.sdk.flutter/background';
 
 class Pushy {
-  static const MethodChannel _channel =
-      const MethodChannel('me.pushy.sdk.flutter/methods');
-  static const EventChannel _eventChannel =
-      const EventChannel('me.pushy.sdk.flutter/events');
+  static const MethodChannel _channel = 
+      const MethodChannel(_methodChannelName);
+  static const EventChannel _eventChannel = 
+      const EventChannel(_eventChannelName);
 
   static NotificationCallback _notificationListener;
   static NotificationCallback _notificationClickListener;
@@ -31,11 +41,11 @@ class Pushy {
       // Decode JSON string into map
       Map<String, dynamic> result = json.decode(data);
 
-      // Print debug log
-      print('Pushy notification received: $result');
-
       // Notification clicked?
       if (result['_pushyNotificationClicked'] != null) {
+        // Print debug log
+        print('Pushy notification click: $result');
+
         // Notification click listener defined?
         if (_notificationClickListener != null) {
           _notificationClickListener(result);
@@ -44,6 +54,9 @@ class Pushy {
           notificationClickQueue.add(result);
         }
       } else {
+        // Print debug log
+        print('Pushy notification received: $result');
+
         // Notification received (not clicked)
         if (_notificationListener != null) {
           _notificationListener(result);
@@ -72,16 +85,22 @@ class Pushy {
   }
 
   static void setNotificationListener(NotificationCallback fn) {
-    // Save listener for later
+    // Save listener for later (iOS invocation)
     _notificationListener = fn;
 
-    // Any notifications pending?
-    if (notificationQueue.length > 0) {
-      notificationQueue.forEach((element) => {_notificationListener(element)});
+    // Retrieve callback handle for _isolate() method 
+    // and app-defined notification handler callback method
+    CallbackHandle isolateCallback = _getCallbackHandle(_isolate);
+    CallbackHandle notificationHandlerCallback = _getCallbackHandle(fn);
 
-      // Empty queue
-      notificationQueue = [];
+    // Ensure callbacks were located
+    if (isolateCallback == null || notificationHandlerCallback == null) {
+      print("Pushy: Error retrieving handle for Flutter callbacks");
+      return;
     }
+
+    // Register callback IDs with native app
+    _channel.invokeMethod('setNotificationListener', <dynamic>[isolateCallback.toRawHandle(), notificationHandlerCallback.toRawHandle()]);
   }
 
   static void setNotificationClickListener(NotificationCallback fn) {
@@ -115,8 +134,10 @@ class Pushy {
   }
 
   static void toggleFCM(bool value) {
-    // Invoke native method
-    _channel.invokeMethod('toggleFCM', <dynamic>[value]);
+    // Invoke native method (Android only)
+    if (Platform.isAndroid) {
+      _channel.invokeMethod('toggleFCM', <dynamic>[value]);
+    }
   }
 
   static void toggleNotifications(bool value) {
@@ -135,8 +156,15 @@ class Pushy {
   }
 
   static void clearBadge() {
-    // Invoke native method
-    _channel.invokeMethod('clearBadge');
+    // Invoke native method (iOS only)
+    if (Platform.isIOS) {
+      _channel.invokeMethod('clearBadge');
+    }
+  }
+
+  static void notify(String title, String message, Map<String, dynamic> data) {
+    // Attempt to display native notification
+    _channel.invokeMethod('notify', <dynamic>[title, message, json.encode(data)]);
   }
 
   static Future<Object> getDeviceCredentials() async {
@@ -158,3 +186,50 @@ class Pushy {
   }
 
 }
+
+// Background isolate entry point (for background handling of push notifications in Dart code)
+void _isolate() {
+  // Initialize state (necessary for MethodChannels)
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize background method channel
+  const MethodChannel _channel = MethodChannel(_backgroundChannelName, JSONMethodCodec());
+
+  // Listen for push notifications sent via the channel
+  _channel.setMethodCallHandler((MethodCall call) async {
+    // Print isolate invocation (debug log)
+    print('Pushy: _isolate() received notfication');
+
+    // Extract arguments
+    final dynamic args = call.arguments;
+
+    // Convert notification handler callback ID to callback handle
+    final CallbackHandle handle = CallbackHandle.fromRawHandle(args[0]);
+
+    // Get the actual notification callback function from handle
+    final Function notificationCallback = PluginUtilities.getCallbackFromHandle(handle);
+
+    // Failed?
+    if (notificationCallback == null) {
+      print('Pushy: Notification callback could not be located');
+    }
+
+    // Ensure we found the right one
+    if (notificationCallback is NotificationCallback) {
+      // Decode JSON string into map
+      Map<String, dynamic> data = json.decode(args[1]);
+
+      // Print debug log
+      print('Pushy notification received: $data');
+
+      // Invoke app-defined notification handler
+      notificationCallback(data);
+    }
+  });
+
+  // Ask for queued notifications to be sent over
+  _channel.invokeMethod('notificationCallbackReady');
+}
+
+// Callback handle helper method
+_GetCallbackHandle _getCallbackHandle = (Function callback) => PluginUtilities.getCallbackHandle(callback);

@@ -60,6 +60,11 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
             unsubscribe(call, result: result)
         }
         
+        // Display an alert winow
+        if (call.method == "notify") {
+            notify(call, result: result)
+        }
+        
         // Pushy Enterprise support
         if (call.method == "setEnterpriseConfig") {
             setEnterpriseConfig(call, result: result)
@@ -170,6 +175,27 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         
         // Call the completion handler immediately on behalf of the app
         completionHandler(UIBackgroundFetchResult.newData)
+    }
+    
+    func notify(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        // Get arguments as list of strings
+        let args = call.arguments as! [String]
+        
+        // Alert title and message
+        let title = args[0];
+        let message = args[1];
+        
+        // Display the notification as an alert
+        let alert = UIAlertController(title: title, message: message, preferredStyle: UIAlertControllerStyle.alert)
+        
+        // Add an action button
+        alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
+        
+        // Show the alert dialog
+        UIApplication.shared.delegate?.window??.rootViewController?.present(alert, animated: true, completion: nil)
+        
+        // Success
+        result("success")
     }
     
     func subscribe(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
