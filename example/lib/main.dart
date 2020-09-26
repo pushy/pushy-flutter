@@ -65,9 +65,6 @@ class _PushyDemoState extends State<PushyDemo> {
     // Start the Pushy service
     Pushy.listen();
 
-    // Request the WRITE_EXTERNAL_STORAGE permission on Android so that the Pushy SDK will be able to persist the device token in the external storage
-    Pushy.requestStoragePermission();
-
     // Set custom notification icon (Android)
     Pushy.setNotificationIcon('ic_notify');
 

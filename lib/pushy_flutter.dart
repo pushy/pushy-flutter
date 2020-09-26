@@ -72,8 +72,7 @@ class Pushy {
   }
 
   static void requestStoragePermission() {
-    // Show permission request dialog
-    _channel.invokeMethod('requestStoragePermission');
+    // No longer needed (leave for backward compatibility)
   }
 
   static Future<bool> isRegistered() async {

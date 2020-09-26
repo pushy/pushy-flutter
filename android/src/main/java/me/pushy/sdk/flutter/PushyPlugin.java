@@ -133,12 +133,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         if (call.method.equals("setNotificationListener")) {
             setNotificationListener(call, result);
         }
-
-        // Request WRITE_EXTERNAL_STORAGE permission
-        if (call.method.equals("requestStoragePermission")) {
-            requestStoragePermission(result);
-        }
-
+        
         // Check if device is registered
         if (call.method.equals("isRegistered")) {
             isRegistered(result);
@@ -360,25 +355,6 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
                 }
             }
         });
-    }
-
-    private void requestStoragePermission(Result result) {
-        // Request permission method
-        Method requestPermission;
-
-        try {
-            // Get method reference via reflection (to support earlier Android versions)
-            requestPermission = mRegistrar.activity().getClass().getMethod("requestPermissions", String[].class, int.class);
-
-            // Request the permission via user-friendly dialog
-            requestPermission.invoke(mRegistrar.activity(), new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE }, 0);
-        } catch (Exception e) {
-            // Log error
-            Log.d(PushyLogging.TAG, "Failed to request WRITE_EXTERNAL_STORAGE permission", e);
-        }
-
-        // Return success nonetheless
-        success(result, "success");
     }
 
     private void setEnterpriseConfig(MethodCall call, Result result) {
