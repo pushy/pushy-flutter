@@ -370,11 +370,11 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
 
     private void setNotificationListener(MethodCall call, Result result) {
         // Get arguments as list
-        final ArrayList<Long> args = call.arguments();
+        final ArrayList<Object> args = call.arguments();
 
-        // Get callback handles (_isolate and notification handler)
-        long isolateCallback = args.get(0);
-        long notificationHandlerCallback = args.get(1);
+        // Get callback handles as long (_isolate and notification handler)
+        long isolateCallback = (args.get(0) instanceof Long) ? (Long) args.get(0) : ((Integer)args.get(0)).longValue();
+        long notificationHandlerCallback = (args.get(1) instanceof Long) ? (Long) args.get(1) : ((Integer)args.get(1)).longValue();
 
         // Start background isolate (if not already started)
         if (!PushyFlutterBackgroundExecutor.isRunning()) {
