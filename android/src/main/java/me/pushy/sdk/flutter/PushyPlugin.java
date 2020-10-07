@@ -1,6 +1,6 @@
 package me.pushy.sdk.flutter;
 
-import android.Manifest;
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
@@ -15,10 +15,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import androidx.annotation.NonNull;
+import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -38,26 +41,33 @@ import me.pushy.sdk.util.PushyStringUtils;
 import me.pushy.sdk.util.exceptions.PushyException;
 import me.pushy.sdk.flutter.util.PushyPersistence;
 
-public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentListener, EventChannel.StreamHandler {
+public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHandler, PluginRegistry.NewIntentListener, EventChannel.StreamHandler {
     static Context mContext;
-    static Registrar mRegistrar;
-    static EventChannel.EventSink mNotificationClickListener;
+    static Activity mActivity;
+    static EventChannel.EventSink mNotificationListener;
 
-    public static void registerWith(Registrar registrar) {
-        // Instantiate plugin
-        PushyPlugin plugin = new PushyPlugin(registrar);
+    @Override
+    public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
+        // Store context for later
+        mContext = binding.getApplicationContext();
 
         // Register a method channel that the Flutter app may invoke
-        MethodChannel channel = new MethodChannel(registrar.messenger(), PushyChannels.METHOD_CHANNEL);
+        MethodChannel channel = new MethodChannel(binding.getBinaryMessenger(), PushyChannels.METHOD_CHANNEL);
 
-        // Instantiate Pushy plugin
-        channel.setMethodCallHandler(plugin);
-
-        // Listen for new intents (notification clicked)
-        registrar.addNewIntentListener(plugin);
+        // Handle method calls (onMethodCall())
+        channel.setMethodCallHandler(this);
 
         // Register an event channel that the Flutter app may listen on
-        new EventChannel(registrar.messenger(), PushyChannels.EVENT_CHANNEL).setStreamHandler(plugin);
+        new EventChannel(binding.getBinaryMessenger(), PushyChannels.EVENT_CHANNEL).setStreamHandler(this);
+    }
+
+    @Override
+    public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
+        // Store reference to activity object
+        mActivity = binding.getActivity();
+
+        // Listen for new intents (notification clicked)
+        binding.addOnNewIntentListener(this);
     }
 
     @Override
@@ -67,12 +77,6 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
 
         // Handled
         return true;
-    }
-
-    private PushyPlugin(Registrar registrar) {
-        // Store registrar and context for later
-        mRegistrar = registrar;
-        mContext = registrar.context();
     }
 
     void onNotificationClicked(Context context, Intent intent) {
@@ -105,13 +109,13 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         }
 
         // No listener defined yet?
-        if (mNotificationClickListener == null) {
+        if (mNotificationListener == null) {
             Log.d(PushyLogging.TAG, "No notification click listener is currently registered");
             return;
         }
 
         // Invoke the notification clicked handler (via EventChannel)
-        mNotificationClickListener.success(notification.toString());
+        mNotificationListener.success(notification.toString());
     }
 
     @Override
@@ -247,23 +251,23 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
 
     @Override
     public void onListen(Object args, final EventChannel.EventSink events) {
-        // Flutter app is listening for notification click
-        Log.w("Pushy", "Flutter app is listening for notification click event");
+        // Flutter app is listening for foreground notification events
+        Log.w("Pushy", "Flutter app is listening for foreground notification events");
 
         // Store handle for later
-        mNotificationClickListener = events;
+        mNotificationListener = events;
 
         // Activity not null?
-        if (mRegistrar.activity() != null) {
+        if (mActivity != null) {
             // If app was opened from notification, invoke notification click listener
-            onNotificationClicked(mRegistrar.activity(), mRegistrar.activity().getIntent());
+            onNotificationClicked(mActivity, mActivity.getIntent());
         }
     }
 
     @Override
     public void onCancel(Object args) {
         // Clear notification listener
-        mNotificationClickListener = null;
+        mNotificationListener = null;
     }
 
     public static void deliverPendingNotifications(Context context) {
@@ -294,6 +298,16 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
+                // Activity is running and notification handler defined?
+                if (mNotificationListener != null && mActivity != null && !mActivity.isFinishing()) {
+                    // Log action
+                    Log.d("Pushy", "Invoking notification listener in foreground (no isolate)");
+
+                    // Invoke with notification payload
+                    mNotificationListener.success(notification.toString());
+                    return;
+                }
+
                 // Activity is not running or no notification handler defined?
                 if (!PushyFlutterBackgroundExecutor.isRunning()) {
                     // Start background isolate
@@ -304,7 +318,7 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
                 }
                 else {
                     // Log action
-                    Log.d("Pushy", "Handling incoming notification in Dart code");
+                    Log.d("Pushy", "Handling notification in Flutter background isolate");
 
                     // Run on background executor
                     PushyFlutterBackgroundExecutor.getSingletonInstance().invokeDartNotificationHandler(notification, context);
@@ -502,5 +516,21 @@ public class PushyPlugin implements MethodCallHandler, PluginRegistry.NewIntentL
                 result.error("PUSHY ERROR", message, null);
             }
         });
+    }
+
+    @Override
+    public void onDetachedFromActivityForConfigChanges() {
+    }
+
+    @Override
+    public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
+    }
+
+    @Override
+    public void onDetachedFromActivity() {
+    }
+
+    @Override
+    public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
     }
 }
