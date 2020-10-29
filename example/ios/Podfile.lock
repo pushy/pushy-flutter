@@ -1,9 +1,9 @@
 PODS:
   - Flutter (1.0.0)
-  - Pushy (1.0.27)
+  - Pushy (1.0.28)
   - pushy_flutter (1.1.5):
     - Flutter
-    - Pushy (= 1.0.27)
+    - Pushy (= 1.0.28)
 
 DEPENDENCIES:
   - Flutter (from `.symlinks/flutter/ios`)
