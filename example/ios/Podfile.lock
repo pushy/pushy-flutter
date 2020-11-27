@@ -1,9 +1,9 @@
 PODS:
   - Flutter (1.0.0)
-  - Pushy (1.0.28)
+  - Pushy (1.0.30)
   - pushy_flutter (1.1.6):
     - Flutter
-    - Pushy (= 1.0.28)
+    - Pushy (= 1.0.30)
 
 DEPENDENCIES:
   - Flutter (from `.symlinks/flutter/ios`)
@@ -21,8 +21,8 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
-  Pushy: e8e034cc15a8ad9d0e1f886cd15a769715588c06
-  pushy_flutter: a4f9f046a2a7349b55c33d678fd86db909c91e9e
+  Pushy: 2ba9bc2e68d105f7bbbcf3b447991f8a8a12f7cc
+  pushy_flutter: da280e83c104620599209b77577112598fc93b61
 
 PODFILE CHECKSUM: b6a0a141693093b304368d08511b46cf3d1d0ac5
 
