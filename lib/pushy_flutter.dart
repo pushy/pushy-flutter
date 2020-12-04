@@ -139,6 +139,13 @@ class Pushy {
     }
   }
 
+  static void toggleMethodSwizzling(bool value) {
+    // Invoke native method (iOS only)
+    if (Platform.isIOS) {
+      _channel.invokeMethod('toggleMethodSwizzling', <dynamic>[value]);
+    }
+  }
+
   static void toggleNotifications(bool value) {
     // Invoke native method
     _channel.invokeMethod('toggleNotifications', <dynamic>[value]);

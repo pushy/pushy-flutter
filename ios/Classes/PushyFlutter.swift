@@ -70,6 +70,11 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
             setEnterpriseConfig(call, result: result)
         }
         
+        // Enable/disable AppDelegate method swizzling
+        if (call.method == "toggleMethodSwizzling") {
+            toggleMethodSwizzling(call, result: result)
+        }
+        
         // Pushy Enterprise support
         if (call.method == "clearBadge") {
             clearBadge(result)
@@ -250,6 +255,17 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         
         // Set Pushy Enterprise API endpoint
         getPushyInstance().setEnterpriseConfig(apiEndpoint: args[0])
+        
+        // Always success
+        result("success")
+    }
+
+    func toggleMethodSwizzling(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        // Get arguments as list of bools
+        let args = call.arguments as! [Bool?]
+        
+        // Pass value to Pushy SDK
+        getPushyInstance().toggleMethodSwizzling(args[0]!)
         
         // Always success
         result("success")
