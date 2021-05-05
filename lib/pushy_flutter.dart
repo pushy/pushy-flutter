@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 
 // Type definitions for helpers
 typedef void NotificationCallback(Map<String, dynamic> data);
-typedef CallbackHandle _GetCallbackHandle(Function callback);
+typedef CallbackHandle? _GetCallbackHandle(Function callback);
 
 // Define channel names
 const String _eventChannelName = 'me.pushy.sdk.flutter/events';
@@ -16,20 +16,19 @@ const String _methodChannelName = 'me.pushy.sdk.flutter/methods';
 const String _backgroundChannelName = 'me.pushy.sdk.flutter/background';
 
 class Pushy {
-  static const MethodChannel _channel = 
-      const MethodChannel(_methodChannelName);
-  static const EventChannel _eventChannel = 
+  static const MethodChannel _channel = const MethodChannel(_methodChannelName);
+  static const EventChannel _eventChannel =
       const EventChannel(_eventChannelName);
 
-  static NotificationCallback _notificationListener;
-  static NotificationCallback _notificationClickListener;
+  static NotificationCallback? _notificationListener;
+  static NotificationCallback? _notificationClickListener;
 
   static var notificationQueue = [];
   static var notificationClickQueue = [];
 
   static Future<String> register() async {
     // Register for push notifications
-    return await _channel.invokeMethod('register');
+    return (await (_channel.invokeMethod<String>('register')))!;
   }
 
   static void listen() {
@@ -48,7 +47,7 @@ class Pushy {
 
         // Notification click listener defined?
         if (_notificationClickListener != null) {
-          _notificationClickListener(result);
+          _notificationClickListener!(result);
         } else {
           // Queue for later
           notificationClickQueue.add(result);
@@ -59,7 +58,7 @@ class Pushy {
 
         // Notification received (not clicked)
         if (_notificationListener != null) {
-          _notificationListener(result);
+          _notificationListener!(result);
         } else {
           // Queue for later
           notificationQueue.add(result);
@@ -77,7 +76,7 @@ class Pushy {
 
   static Future<bool> isRegistered() async {
     // Query for registration status
-    String result = await _channel.invokeMethod('isRegistered');
+    String result = (await _channel.invokeMethod<String>('isRegistered'))!;
 
     // Convert string result to bool
     return result == "true" ? true : false;
@@ -87,10 +86,10 @@ class Pushy {
     // Save listener for later (iOS invocation)
     _notificationListener = fn;
 
-    // Retrieve callback handle for _isolate() method 
+    // Retrieve callback handle for _isolate() method
     // and app-defined notification handler callback method
-    CallbackHandle isolateCallback = _getCallbackHandle(_isolate);
-    CallbackHandle notificationHandlerCallback = _getCallbackHandle(fn);
+    CallbackHandle? isolateCallback = _getCallbackHandle(_isolate);
+    CallbackHandle? notificationHandlerCallback = _getCallbackHandle(fn);
 
     // Ensure callbacks were located
     if (isolateCallback == null || notificationHandlerCallback == null) {
@@ -99,7 +98,10 @@ class Pushy {
     }
 
     // Register callback IDs with native app
-    _channel.invokeMethod('setNotificationListener', <dynamic>[isolateCallback.toRawHandle(), notificationHandlerCallback.toRawHandle()]);
+    _channel.invokeMethod('setNotificationListener', <dynamic>[
+      isolateCallback.toRawHandle(),
+      notificationHandlerCallback.toRawHandle()
+    ]);
   }
 
   static void setNotificationClickListener(NotificationCallback fn) {
@@ -109,21 +111,21 @@ class Pushy {
     // Any notifications pending?
     if (notificationClickQueue.length > 0) {
       notificationClickQueue
-          .forEach((element) => {_notificationClickListener(element)});
+          .forEach((element) => {_notificationClickListener!(element)});
 
       // Empty queue
       notificationClickQueue = [];
     }
   }
 
-  static Future<String> subscribe(String topic) async {
+  static Future<String?> subscribe(String topic) async {
     // Attempt to subscribe the device to topic
-    return await _channel.invokeMethod('subscribe', <dynamic>[topic]);
+    return await _channel.invokeMethod<String>('subscribe', <dynamic>[topic]);
   }
 
-  static Future<String> unsubscribe(String topic) async {
+  static Future<String?> unsubscribe(String topic) async {
     // Attempt to unsubscribe the device from topic
-    return await _channel.invokeMethod('unsubscribe', <dynamic>[topic]);
+    return await _channel.invokeMethod<String>('unsubscribe', <dynamic>[topic]);
   }
 
   static void setEnterpriseConfig(String apiEndpoint, String mqttEndpoint) {
@@ -170,27 +172,28 @@ class Pushy {
 
   static void notify(String title, String message, Map<String, dynamic> data) {
     // Attempt to display native notification
-    _channel.invokeMethod('notify', <dynamic>[title, message, json.encode(data)]);
+    _channel
+        .invokeMethod('notify', <dynamic>[title, message, json.encode(data)]);
   }
 
-  static Future<Object> getDeviceCredentials() async {
+  static Future<Object?> getDeviceCredentials() async {
     // Fetch device credentials as list
-    List result = await _channel.invokeMethod('getDeviceCredentials');
+    List? result = await _channel.invokeMethod<List>('getDeviceCredentials');
 
     // Return null if device not registered yet
     if (result == null) {
       return result;
     }
-  
+
     // Convert list to map of {token, authKey}
     return {'token': result[0], 'authKey': result[1]};
   }
 
-  static Future<String> setDeviceCredentials(Map credentials) async {
+  static Future<String?> setDeviceCredentials(Map credentials) async {
     // Attempt to assign device credentials
-    return await _channel.invokeMethod('setDeviceCredentials', <dynamic>[credentials['token'], credentials['authKey']]);
+    return await _channel.invokeMethod<String>('setDeviceCredentials',
+        <dynamic>[credentials['token'], credentials['authKey']]);
   }
-
 }
 
 // Background isolate entry point (for background handling of push notifications in Dart code)
@@ -199,7 +202,8 @@ void _isolate() {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize background method channel
-  const MethodChannel _channel = MethodChannel(_backgroundChannelName, JSONMethodCodec());
+  const MethodChannel _channel =
+      MethodChannel(_backgroundChannelName, JSONMethodCodec());
 
   // Listen for push notifications sent via the channel
   _channel.setMethodCallHandler((MethodCall call) async {
@@ -213,7 +217,8 @@ void _isolate() {
     final CallbackHandle handle = CallbackHandle.fromRawHandle(args[0]);
 
     // Get the actual notification callback function from handle
-    final Function notificationCallback = PluginUtilities.getCallbackFromHandle(handle);
+    final Function? notificationCallback =
+        PluginUtilities.getCallbackFromHandle(handle);
 
     // Failed?
     if (notificationCallback == null) {
@@ -238,4 +243,5 @@ void _isolate() {
 }
 
 // Callback handle helper method
-_GetCallbackHandle _getCallbackHandle = (Function callback) => PluginUtilities.getCallbackHandle(callback);
+_GetCallbackHandle _getCallbackHandle =
+    (Function callback) => PluginUtilities.getCallbackHandle(callback);
