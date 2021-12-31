@@ -95,6 +95,9 @@ class _PushyDemoState extends State<PushyDemo> {
       });
     }
 
+    // Enable in-app notification banners (iOS 10+)
+    Pushy.toggleInAppBanner(false);
+
     // Listen for push notifications received
     Pushy.setNotificationListener(backgroundNotificationListener);
 

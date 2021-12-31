@@ -148,6 +148,13 @@ class Pushy {
     }
   }
 
+  static void toggleInAppBanner(bool value) {
+    // Invoke native method (iOS only)
+    if (Platform.isIOS) {
+      _channel.invokeMethod('toggleInAppBanner', <dynamic>[value]);
+    }
+  }
+
   static void toggleNotifications(bool value) {
     // Invoke native method
     _channel.invokeMethod('toggleNotifications', <dynamic>[value]);

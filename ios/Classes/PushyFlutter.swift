@@ -65,6 +65,11 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
             notify(call, result: result)
         }
         
+        // Toggle in-app notification banners (iOS 10+)
+        if (call.method == "toggleInAppBanner") {
+            toggleInAppBanner(call, result: result)
+        }
+        
         // Pushy Enterprise support
         if (call.method == "setEnterpriseConfig") {
             setEnterpriseConfig(call, result: result)
@@ -86,23 +91,27 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         
         // Listen for startup notifications
         self.getPushyInstance().setNotificationHandler({ (userInfo, completionHandler) in
-            // Make userInfo mutable
-            var data = userInfo;
-            
-            // Startup notifications have always been clicked
-            data["_pushyNotificationClicked"] = true;
-            
-            // Print notification payload data
-            print("Received notification: \(data)")
-            
             // Store for later
-            self.startupNotification = data
-            self.hasStartupNotification = true
+            self.storeStartupNotification(userInfo)
             
-            // You must call this completion handler when you finish processing
-            // the notification (after fetching background data, if applicable)
+            // Call background completion handler
             completionHandler(UIBackgroundFetchResult.newData)
         })
+        
+        // Listen for startup notifications (both listeners required)
+        self.getPushyInstance().setNotificationClickListener({ (userInfo) in
+            // Store for later
+            self.storeStartupNotification(userInfo)
+        })
+    }
+    
+    func storeStartupNotification(_ data: [AnyHashable : Any]) {
+        // Print event & notification payload data
+        print("Startup notification: \(data)")
+        
+        // Store for later
+        self.startupNotification = data
+        self.hasStartupNotification = true
     }
     
     func getPushyInstance() -> Pushy {
@@ -137,26 +146,20 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         // Set notification handler to our own
         getPushyInstance().setNotificationHandler(self.notificationHandler)
         
+        // Set notification click listener to our own
+        getPushyInstance().setNotificationClickListener(self.notificationClickListener)
+        
         // Check for startup notification if exists
         if self.hasStartupNotification {
-            // Execute notification handler accordingly
-            self.notificationHandler(userInfo: self.startupNotification!, completionHandler: {(UIBackgroundFetchResult) in})
+            // Execute click notification handler
+            self.notificationClickListener(userInfo: self.startupNotification!)
         }
         
         // Nil means success
         return nil
     }
     
-    func notificationHandler(userInfo: [AnyHashable : Any], completionHandler: ((UIBackgroundFetchResult) -> Void)) {
-        // Make userInfo mutable
-        var data = userInfo;
-        
-        // Notification clicked?
-        if (UIApplication.shared.applicationState == UIApplication.State.inactive) {
-            // Set flag for invoking click listener
-            data["_pushyNotificationClicked"] = true;
-        }
-        
+    func notificationHandler(data: [AnyHashable : Any], completionHandler: ((UIBackgroundFetchResult) -> Void)) {
         // Print notification payload data
         print("Received notification: \(data)")
         
@@ -180,6 +183,35 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         
         // Call the completion handler immediately on behalf of the app
         completionHandler(UIBackgroundFetchResult.newData)
+    }
+    
+    func notificationClickListener(userInfo: [AnyHashable : Any]) {
+        // Make userInfo mutable
+        var data = userInfo;
+    
+        // Set flag for invoking click listener
+        data["_pushyNotificationClicked"] = true;
+        
+        // Print notification payload data
+        print("Clicked notification: \(data)")
+        
+        // Convert to JSON (stringified)
+        let json: String
+        
+        do {
+            // Attempt to serialize into JSON string
+            json = String(bytes: try JSONSerialization.data(withJSONObject: data, options: []), encoding: String.Encoding.utf8) ?? ""
+        }
+        catch let err {
+            // Throw err
+            self.eventSink?(FlutterError(code: "PUSHY ERROR",
+                                         message: err.localizedDescription,
+                                         details: nil))
+            return
+        }
+        
+        // Send JSON data to Flutter app
+        self.eventSink?(json)
     }
     
     func notify(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -255,6 +287,32 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         
         // Set Pushy Enterprise API endpoint
         getPushyInstance().setEnterpriseConfig(apiEndpoint: args[0])
+        
+        // Always success
+        result("success")
+    }
+    
+    func toggleInAppBanner(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        // Get arguments as list of bools
+        let args = call.arguments as! [Bool?]
+        
+        // Get toggle value
+        let toggle = args[0]!
+        
+        // Enable/disable in-app notification banners (iOS 10+)
+        getPushyInstance().toggleInAppBanner(toggle)
+        
+        // iOS 10+ only
+        if #available(iOS 10.0, *) {
+            // Toggled off? (after previously being toggled on)
+            if (!toggle) {
+                // Reset UNUserNotificationCenterDelegate to nil to avoid displaying banner
+                UNUserNotificationCenter.current().delegate = nil
+            } else {
+                // Set UNUserNotificationCente delegate so in-app banners are displayed
+                UNUserNotificationCenter.current().delegate = getPushyInstance()
+            }
+        }
         
         // Always success
         result("success")
