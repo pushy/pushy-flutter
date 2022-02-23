@@ -7,6 +7,7 @@ import android.util.Log;
 
 import org.json.JSONObject;
 
+import io.flutter.FlutterInjector;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.embedding.engine.dart.DartExecutor;
 import io.flutter.embedding.engine.dart.DartExecutor.DartCallback;
@@ -73,7 +74,13 @@ public class PushyFlutterBackgroundExecutor implements MethodCallHandler {
 
         // Get assets and app bundle path
         AssetManager assets = context.getAssets();
-        String appBundlePath = FlutterMain.findAppBundlePath(context);
+        
+        // Fix for NullPointerException when calling findAppBundlePath() in background
+        // https://github.com/transistorsoft/flutter_background_fetch/issues/160#issuecomment-751667361
+        FlutterInjector.instance().flutterLoader().startInitialization(context);
+
+        // Get app bundle path as string
+        String appBundlePath = FlutterInjector.instance().flutterLoader().findAppBundlePath();
 
         // Null safety check
         if (appBundlePath != null) {
