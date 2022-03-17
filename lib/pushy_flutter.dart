@@ -177,6 +177,23 @@ class Pushy {
     }
   }
 
+  static Future<bool> isIgnoringBatteryOptimizations() async {
+    // Android-only feature
+    if (!Platform.isAndroid) {
+      return true;
+    }
+
+    // Query for Android battery optimization status
+    return (await _channel.invokeMethod<bool>('isIgnoringBatteryOptimizations'))!;
+  }
+
+  static void launchBatteryOptimizationsActivity() {
+    // Invoke native method (Android only)
+    if (Platform.isAndroid) {
+      _channel.invokeMethod('launchBatteryOptimizationsActivity');
+    }
+  }
+
   static void notify(String title, String message, Map<String, dynamic> data) {
     // Attempt to display native notification
     _channel

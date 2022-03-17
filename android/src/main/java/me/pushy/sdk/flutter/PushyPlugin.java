@@ -10,6 +10,8 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.provider.Settings;
+import android.os.PowerManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -191,6 +193,16 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
         // Device credential assignment support
         if (call.method.equals("setDeviceCredentials")) {
             setDeviceCredentials(call, result);
+        }
+
+        // Launch battery optimizations activity
+        if (call.method.equals("isIgnoringBatteryOptimizations")) {
+            isIgnoringBatteryOptimizations(result);
+        }
+
+        // Launch battery optimizations activity
+        if (call.method.equals("launchBatteryOptimizationsActivity")) {
+            launchBatteryOptimizationsActivity(result);
         }
     }
 
@@ -454,6 +466,22 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
 
         // Toggle FCM on/off
         Pushy.toggleFCM(value, mContext);
+
+        // Return success
+        success(result, "success");
+    }
+
+    private void isIgnoringBatteryOptimizations(final Result result) {
+        // Get power manager instance
+        PowerManager powerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+
+        // Resolve the promise with battery optimization status
+        success(result, powerManager.isIgnoringBatteryOptimizations(mContext.getPackageName()));
+    }
+
+    private void launchBatteryOptimizationsActivity(Result result) {
+        // Display the battery optimization settings screen
+        mActivity.startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
 
         // Return success
         success(result, "success");
