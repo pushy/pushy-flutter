@@ -164,6 +164,11 @@ class Pushy {
     // Invoke native method
     _channel.invokeMethod('setNotificationIcon', <dynamic>[resourceName]);
   }
+  
+  static void setJobServiceInterval(int resourceName) {
+    // Invoke native method
+    _channel.invokeMethod('setJobServiceInterval', <dynamic>[resourceName]);
+  }
 
   static void setHeartbeatInterval(int resourceName) {
     // Invoke native method

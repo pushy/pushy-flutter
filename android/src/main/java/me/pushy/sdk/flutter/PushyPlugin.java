@@ -185,6 +185,11 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
             setHeartbeatInterval(call, result);
         }
 
+        // Custom JobService interval support
+        if (call.method.equals("setJobServiceInterval")) {
+            setJobServiceInterval(call, result);
+        }
+
         // Device credential retrieval support
         if (call.method.equals("getDeviceCredentials")) {
             getDeviceCredentials(result);
@@ -426,6 +431,20 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
         PushyPersistence.setNotificationIcon(iconResourceName, mContext);
 
         // Return success nonetheless
+        success(result, "success");
+    }
+    
+    private void setJobServiceInterval(MethodCall call, Result result) {
+        // Get arguments
+        final ArrayList<Integer> args = call.arguments();
+
+        // Get interval in ms
+        int interval = args.get(0);
+
+        // Modify JobService interval
+        Pushy.setJobServiceInterval(interval, mActivity);
+
+        // Return success
         success(result, "success");
     }
 
