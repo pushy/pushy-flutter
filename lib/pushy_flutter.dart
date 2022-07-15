@@ -1,10 +1,10 @@
-import 'dart:ui';
-import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'dart:ui';
 
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 // Type definitions for helpers
 typedef void NotificationCallback(Map<String, dynamic> data);
@@ -164,7 +164,7 @@ class Pushy {
     // Invoke native method
     _channel.invokeMethod('setNotificationIcon', <dynamic>[resourceName]);
   }
-  
+
   static void setJobServiceInterval(int resourceName) {
     // Invoke native method
     _channel.invokeMethod('setJobServiceInterval', <dynamic>[resourceName]);
@@ -189,7 +189,8 @@ class Pushy {
     }
 
     // Query for Android battery optimization status
-    return (await _channel.invokeMethod<bool>('isIgnoringBatteryOptimizations'))!;
+    return (await _channel
+        .invokeMethod<bool>('isIgnoringBatteryOptimizations'))!;
   }
 
   static void launchBatteryOptimizationsActivity() {
@@ -226,6 +227,7 @@ class Pushy {
 }
 
 // Background isolate entry point (for background handling of push notifications in Dart code)
+@pragma('vm:entry-point')
 void _isolate() {
   // Initialize state (necessary for MethodChannels)
   WidgetsFlutterBinding.ensureInitialized();
