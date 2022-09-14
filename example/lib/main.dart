@@ -117,7 +117,7 @@ class _PushyDemoState extends State<PushyDemo> {
               title: Text('Notification clicked'),
               content: Text(message),
               actions: [
-                FlatButton(
+                ElevatedButton(
                   child: Text('OK'),
                   onPressed: () {
                     Navigator.of(context, rootNavigator: true).pop('dialog');
