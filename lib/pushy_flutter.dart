@@ -226,6 +226,7 @@ class Pushy {
 }
 
 // Background isolate entry point (for background handling of push notifications in Dart code)
+@pragma('vm:entry-point')
 void _isolate() {
   // Initialize state (necessary for MethodChannels)
   WidgetsFlutterBinding.ensureInitialized();

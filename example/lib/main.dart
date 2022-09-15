@@ -9,7 +9,7 @@ void main() => runApp(Main());
 
 // Please place this code in main.dart,
 // After the import statements, and outside any Widget class (top-level)
-
+@pragma('vm:entry-point')
 void backgroundNotificationListener(Map<String, dynamic> data) {
   // Print notification payload data
   print('Received notification: $data');
