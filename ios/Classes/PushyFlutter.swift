@@ -9,6 +9,20 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
     var startupNotification: [AnyHashable : Any]?
     
     public static func register(with registrar: FlutterPluginRegistrar) {
+        // On iOS 14+, Flutter apps built in the Debug scheme
+        // Need to be attached to the Xcode debugger
+        // 
+        // https://github.com/flutter/flutter/issues/66422#issuecomment-697972897
+        if #available(iOS 14, *) {
+            // Built in Debug mode?
+            #if DEBUG
+                // Avoid plugin initialization if Xcode debugger is not attached
+                if (getppid() == 1) {
+                    return
+                }
+            #endif
+        }
+        
         // Register a method channel that the Flutter app may invoke
         let channel = FlutterMethodChannel(name: PushyChannels.methodChannel, binaryMessenger: registrar.messenger())
         
