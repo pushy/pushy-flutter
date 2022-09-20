@@ -218,7 +218,7 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
             public void run() {
                 try {
                     // Assign a unique token to this device
-                    String deviceToken = Pushy.register(mContext);
+                    String deviceToken = Pushy.register(mActivity);
 
                     // Resolve the promise with the token
                     success(result, deviceToken);
