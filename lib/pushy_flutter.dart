@@ -164,7 +164,7 @@ class Pushy {
     // Invoke native method
     _channel.invokeMethod('setNotificationIcon', <dynamic>[resourceName]);
   }
-  
+
   static void setJobServiceInterval(int resourceName) {
     // Invoke native method
     _channel.invokeMethod('setJobServiceInterval', <dynamic>[resourceName]);
@@ -222,6 +222,11 @@ class Pushy {
     // Attempt to assign device credentials
     return await _channel.invokeMethod<String>('setDeviceCredentials',
         <dynamic>[credentials['token'], credentials['authKey']]);
+  }
+
+  static void setAppId(String appId) {
+    // Invoke native method
+    _channel.invokeMethod('setAppId', <dynamic>[appId]);
   }
 }
 
