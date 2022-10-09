@@ -209,6 +209,11 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
         if (call.method.equals("launchBatteryOptimizationsActivity")) {
             launchBatteryOptimizationsActivity(result);
         }
+
+        // Launch battery optimizations activity
+        if (call.method.equals("setAppId")) {
+            setAppId(call, result);
+        }
     }
 
     private void register(final Result result) {
@@ -541,6 +546,20 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
 
         // Return success
         success(result, true);
+    }
+
+    private void setAppId(MethodCall call, Result result) {
+        // Get arguments
+        final ArrayList<String> args = call.arguments();
+
+        // Get app id value as string
+        String value = args.get(0);
+
+        // Set the Pushy app id
+        Pushy.setAppId(value, mContext);
+
+        // Return success
+        success(result, "success");
     }
 
     void success(final Result result, final Object message) {

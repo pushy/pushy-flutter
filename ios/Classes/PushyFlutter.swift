@@ -98,6 +98,11 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         if (call.method == "clearBadge") {
             clearBadge(result)
         }
+
+        // Change Pushy app id
+        if (call.method == "setAppId") {
+            setAppId(call, result: result)
+        }
     }
     
     public override init() {
@@ -301,6 +306,17 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         
         // Set Pushy Enterprise API endpoint
         getPushyInstance().setEnterpriseConfig(apiEndpoint: args[0])
+        
+        // Always success
+        result("success")
+    }
+
+    func setAppId(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        // Get arguments as list of strings
+        let args = call.arguments as! [String?]
+        
+        // Set Pushy app id
+        getPushyInstance().setAppId(args[0])
         
         // Always success
         result("success")
