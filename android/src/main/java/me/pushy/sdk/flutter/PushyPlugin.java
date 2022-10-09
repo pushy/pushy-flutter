@@ -200,7 +200,7 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
             setDeviceCredentials(call, result);
         }
 
-        // Launch battery optimizations activity
+        // Check whether app whitelisted from battery optimizations
         if (call.method.equals("isIgnoringBatteryOptimizations")) {
             isIgnoringBatteryOptimizations(result);
         }
@@ -210,7 +210,7 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
             launchBatteryOptimizationsActivity(result);
         }
 
-        // Launch battery optimizations activity
+        // Set Pushy App ID support
         if (call.method.equals("setAppId")) {
             setAppId(call, result);
         }
@@ -552,10 +552,10 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
         // Get arguments
         final ArrayList<String> args = call.arguments();
 
-        // Get app id value as string
+        // Get App ID value as string
         String value = args.get(0);
 
-        // Set the Pushy app id
+        // Set the Pushy App ID
         Pushy.setAppId(value, mContext);
 
         // Return success

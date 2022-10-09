@@ -99,7 +99,7 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
             clearBadge(result)
         }
 
-        // Change Pushy app id
+        // Change Pushy App ID
         if (call.method == "setAppId") {
             setAppId(call, result: result)
         }
@@ -315,7 +315,7 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         // Get arguments as list of strings
         let args = call.arguments as! [String?]
         
-        // Set Pushy app id
+        // Set Pushy App ID
         getPushyInstance().setAppId(args[0])
         
         // Always success
