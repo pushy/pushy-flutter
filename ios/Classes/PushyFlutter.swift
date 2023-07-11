@@ -367,8 +367,14 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
     func setCriticalAlertOption(_ result: @escaping FlutterResult) {
         // iOS 12+ only
         if #available(iOS 12, *) {
-            // Set custom notification options with .criticalAlert
-            getPushyInstance().setCustomNotificationOptions([UNAuthorizationOptions.alert, UNAuthorizationOptions.badge, UNAuthorizationOptions.sound, UNAuthorizationOptions.criticalAlert])
+            // Prepare notification options
+            var options = UNAuthorizationOptions()
+            
+            // Declare standard options alogn with .criticalAlert
+            options = [.badge, .alert, .sound, .criticalAlert]
+
+            // Set custom notification options
+            getPushyInstance().setCustomNotificationOptions(options)
         }
         
         // Always success
