@@ -84,6 +84,11 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
             toggleInAppBanner(call, result: result)
         }
         
+        // Support for iOS 12+ Critical Alerts
+        if (call.method == "setCriticalAlertOption") {
+            setCriticalAlertOption(result)
+        }
+        
         // Pushy Enterprise support
         if (call.method == "setEnterpriseConfig") {
             setEnterpriseConfig(call, result: result)
@@ -354,6 +359,17 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         
         // Pass value to Pushy SDK
         getPushyInstance().toggleMethodSwizzling(args[0]!)
+        
+        // Always success
+        result("success")
+    }
+    
+    func setCriticalAlertOption(_ result: @escaping FlutterResult) {
+        // iOS 12+ only
+        if #available(iOS 12, *) {
+            // Set custom notification options with .criticalAlert
+            getPushyInstance().setCustomNotificationOptions([UNAuthorizationOptions.alert, UNAuthorizationOptions.badge, UNAuthorizationOptions.sound, UNAuthorizationOptions.criticalAlert])
+        }
         
         // Always success
         result("success")

@@ -148,6 +148,13 @@ class Pushy {
     }
   }
 
+  static void setCriticalAlertOption() {
+    // Invoke native method (iOS only)
+    if (Platform.isIOS) {
+      _channel.invokeMethod('setCriticalAlertOption');
+    }
+  }
+
   static void toggleInAppBanner(bool value) {
     // Invoke native method (iOS only)
     if (Platform.isIOS) {
