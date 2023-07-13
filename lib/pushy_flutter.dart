@@ -74,6 +74,19 @@ class Pushy {
     // No longer needed (leave for backward compatibility)
   }
 
+  static Future<String> getApnsToken() async {
+    // iOS only
+    if (!Platform.isIOS) {
+      return '';
+    }
+
+    // Query for underlying APNs token
+    String result = (await _channel.invokeMethod<String>('getApnsToken'))!;
+
+    // Return result
+    return result;
+  }
+
   static Future<bool> isRegistered() async {
     // Query for registration status
     String result = (await _channel.invokeMethod<String>('isRegistered'))!;
