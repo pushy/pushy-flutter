@@ -15,6 +15,6 @@ Pod::Spec.new do |s|
   s.dependency 'Flutter'
   s.dependency 'Pushy', '1.0.47'
 
-  s.ios.deployment_target = '8.0'
+  s.ios.deployment_target = '9.0'
 end
 
