@@ -65,8 +65,8 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         }
         
         // Fetch underlying APNs token
-        if (call.method == "getApnsToken") {
-            getApnsToken(result)
+        if (call.method == "getAPNsToken") {
+            getAPNsToken(result)
         }
         
         // Subscribe device to topic
@@ -310,9 +310,9 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         result(isRegistered ? "true" : "false")
     }
 
-    func getApnsToken(_ result: @escaping FlutterResult) {
+    func getAPNsToken(_ result: @escaping FlutterResult) {
         // Fetch underlying APNs token
-        let apnsToken = getPushyInstance().getApnsToken()
+        let apnsToken = getPushyInstance().getAPNsToken()
         
         // Send result to Flutter app
         result(apnsToken != nil ? apnsToken : "")
