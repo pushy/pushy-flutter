@@ -87,6 +87,19 @@ class Pushy {
     return result;
   }
 
+  static Future<String> getFCMToken() async {
+    // Android only
+    if (!Platform.isAndroid) {
+      return '';
+    }
+
+    // Query for underlying FCM token
+    String result = (await _channel.invokeMethod<String>('getFCMToken'))!;
+
+    // Return result
+    return result;
+  }
+
   static Future<bool> isRegistered() async {
     // Query for registration status
     String result = (await _channel.invokeMethod<String>('isRegistered'))!;

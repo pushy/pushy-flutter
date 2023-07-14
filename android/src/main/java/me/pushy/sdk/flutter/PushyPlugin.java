@@ -165,6 +165,11 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
             toggleFCM(call, result);
         }
 
+        // Get FCM fallback delivery token
+        if (call.method.equals("getFCMToken")) {
+            getFCMToken(result);
+        }
+
         // Pushy Enterprise support
         if (call.method.equals("setEnterpriseConfig")) {
             setEnterpriseConfig(call, result);
@@ -493,6 +498,25 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
 
         // Return success
         success(result, "success");
+    }
+
+    private void getFCMToken(final Result result) {
+        // Run synchronous operation in background thread
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // Fetch FCM fallback delivery token (blocking call)
+                    String fcmToken = Pushy.getFCMToken();
+
+                    // Resolve the promise with the token
+                    success(result, fcmToken);
+                } catch (final PushyException exc) {
+                    // Reject the promise with the exception
+                    error(result, exc.getMessage());
+                }
+            }
+        });
     }
 
     private void isIgnoringBatteryOptimizations(final Result result) {
