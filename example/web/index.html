@@ -29,6 +29,9 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
+  <!-- Pushy Web Push SDK-->
+  <script src="https://sdk.pushy.me/web/1.0.10/pushy-sdk.js"></script>
+
   <title>Pushy</title>
   <link rel="manifest" href="manifest.json">
 
@@ -45,6 +48,7 @@
       // Download main.dart.js
       _flutter.loader.loadEntrypoint({
         serviceWorker: {
+          serviceWorkerUrl: 'service-worker.js',
           serviceWorkerVersion: serviceWorkerVersion,
         }
       }).then(function(engineInitializer) {
