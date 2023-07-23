@@ -1,10 +1,12 @@
 import 'dart:ui';
-import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+
+import './pushy_flutter_web.dart';
 
 // Type definitions for helpers
 typedef void NotificationCallback(Map<String, dynamic> data);
@@ -23,15 +25,26 @@ class Pushy {
   static NotificationCallback? _notificationListener;
   static NotificationCallback? _notificationClickListener;
 
+  static var appId;
   static var notificationQueue = [];
   static var notificationClickQueue = [];
 
   static Future<String> register() async {
+    // Running on Web?
+    if (GetPlatform.isWeb) {
+      return await PushyWebSDK.register(appId);
+    }
+
     // Register for push notifications
     return (await (_channel.invokeMethod<String>('register')))!;
   }
 
   static void listen() {
+    // Android & iOS only
+    if (GetPlatform.isWeb) {
+      return;
+    }
+
     // Invoke native method
     _channel.invokeMethod('listen');
 
@@ -76,7 +89,7 @@ class Pushy {
 
   static Future<String> getAPNsToken() async {
     // iOS only
-    if (!Platform.isIOS) {
+    if (!GetPlatform.isIOS) {
       return '';
     }
 
@@ -89,7 +102,7 @@ class Pushy {
 
   static Future<String> getFCMToken() async {
     // Android only
-    if (!Platform.isAndroid) {
+    if (!GetPlatform.isAndroid) {
       return '';
     }
 
@@ -101,6 +114,11 @@ class Pushy {
   }
 
   static Future<bool> isRegistered() async {
+    // Running on Web?
+    if (GetPlatform.isWeb) {
+      return PushyWebSDK.isRegistered();
+    }
+
     // Query for registration status
     String result = (await _channel.invokeMethod<String>('isRegistered'))!;
 
@@ -109,6 +127,11 @@ class Pushy {
   }
 
   static void setNotificationListener(NotificationCallback fn) {
+    // Running on Web?
+    if (GetPlatform.isWeb) {
+      return PushyWebSDK.setNotificationListener(fn);
+    }
+
     // Save listener for later (iOS invocation)
     _notificationListener = fn;
 
@@ -144,17 +167,32 @@ class Pushy {
     }
   }
 
-  static Future<String?> subscribe(String topic) async {
+  static Future<void> subscribe(String topic) async {
+    // Running on Web?
+    if (GetPlatform.isWeb) {
+      return PushyWebSDK.subscribe(topic);
+    }
+
     // Attempt to subscribe the device to topic
-    return await _channel.invokeMethod<String>('subscribe', <dynamic>[topic]);
+    return await _channel.invokeMethod('subscribe', <dynamic>[topic]);
   }
 
-  static Future<String?> unsubscribe(String topic) async {
+  static Future<void> unsubscribe(String topic) async {
+    // Running on Web?
+    if (GetPlatform.isWeb) {
+      return PushyWebSDK.unsubscribe(topic);
+    }
+
     // Attempt to unsubscribe the device from topic
-    return await _channel.invokeMethod<String>('unsubscribe', <dynamic>[topic]);
+    return await _channel.invokeMethod('unsubscribe', <dynamic>[topic]);
   }
 
   static void setEnterpriseConfig(String apiEndpoint, String mqttEndpoint) {
+    // Running on Web?
+    if (GetPlatform.isWeb) {
+      return PushyWebSDK.setEnterpriseConfig(apiEndpoint);
+    }
+
     // Invoke native method
     _channel.invokeMethod(
         'setEnterpriseConfig', <dynamic>[apiEndpoint, mqttEndpoint]);
@@ -162,28 +200,28 @@ class Pushy {
 
   static void toggleFCM(bool value) {
     // Invoke native method (Android only)
-    if (Platform.isAndroid) {
+    if (GetPlatform.isAndroid) {
       _channel.invokeMethod('toggleFCM', <dynamic>[value]);
     }
   }
 
   static void toggleMethodSwizzling(bool value) {
     // Invoke native method (iOS only)
-    if (Platform.isIOS) {
+    if (GetPlatform.isIOS) {
       _channel.invokeMethod('toggleMethodSwizzling', <dynamic>[value]);
     }
   }
 
   static void setCriticalAlertOption() {
     // Invoke native method (iOS only)
-    if (Platform.isIOS) {
+    if (GetPlatform.isIOS) {
       _channel.invokeMethod('setCriticalAlertOption');
     }
   }
 
   static void toggleInAppBanner(bool value) {
     // Invoke native method (iOS only)
-    if (Platform.isIOS) {
+    if (GetPlatform.isIOS) {
       _channel.invokeMethod('toggleInAppBanner', <dynamic>[value]);
     }
   }
@@ -194,8 +232,11 @@ class Pushy {
   }
 
   static void setNotificationIcon(String resourceName) {
-    // Invoke native method
-    _channel.invokeMethod('setNotificationIcon', <dynamic>[resourceName]);
+    // Android only
+    if (GetPlatform.isAndroid) {
+      // Invoke native method
+      _channel.invokeMethod('setNotificationIcon', <dynamic>[resourceName]);
+    }
   }
 
   static void setJobServiceInterval(int resourceName) {
@@ -210,29 +251,35 @@ class Pushy {
 
   static void clearBadge() {
     // Invoke native method (iOS only)
-    if (Platform.isIOS) {
+    if (GetPlatform.isIOS) {
       _channel.invokeMethod('clearBadge');
     }
   }
 
   static Future<bool> isIgnoringBatteryOptimizations() async {
     // Android-only feature
-    if (!Platform.isAndroid) {
+    if (!GetPlatform.isAndroid) {
       return true;
     }
 
     // Query for Android battery optimization status
-    return (await _channel.invokeMethod<bool>('isIgnoringBatteryOptimizations'))!;
+    return (await _channel
+        .invokeMethod<bool>('isIgnoringBatteryOptimizations'))!;
   }
 
   static void launchBatteryOptimizationsActivity() {
     // Invoke native method (Android only)
-    if (Platform.isAndroid) {
+    if (GetPlatform.isAndroid) {
       _channel.invokeMethod('launchBatteryOptimizationsActivity');
     }
   }
 
   static void notify(String title, String message, Map<String, dynamic> data) {
+    // Android & iOS only
+    if (GetPlatform.isWeb) {
+      return;
+    }
+
     // Attempt to display native notification
     _channel
         .invokeMethod('notify', <dynamic>[title, message, json.encode(data)]);
@@ -257,9 +304,15 @@ class Pushy {
         <dynamic>[credentials['token'], credentials['authKey']]);
   }
 
-  static void setAppId(String appId) {
-    // Invoke native method
-    _channel.invokeMethod('setAppId', <dynamic>[appId]);
+  static void setAppId(String id) {
+    // Store app ID for later (for Web SDK)
+    appId = id;
+    
+    // Not running on Web?
+    if (!GetPlatform.isWeb) {
+      // Invoke native method
+      _channel.invokeMethod('setAppId', <dynamic>[appId]);
+    }
   }
 }
 
