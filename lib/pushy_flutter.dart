@@ -240,8 +240,11 @@ class Pushy {
   }
 
   static void setJobServiceInterval(int resourceName) {
-    // Invoke native method
-    _channel.invokeMethod('setJobServiceInterval', <dynamic>[resourceName]);
+    // Android only
+    if (GetPlatform.isAndroid) {
+      // Invoke native method
+      _channel.invokeMethod('setJobServiceInterval', <dynamic>[resourceName]);
+    }
   }
 
   static void setHeartbeatInterval(int resourceName) {
