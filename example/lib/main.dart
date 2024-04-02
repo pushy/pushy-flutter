@@ -38,7 +38,7 @@ class Main extends StatelessWidget {
         // Light theme with dark action bar
         brightness: Brightness.light,
         primaryColor: Colors.grey[900],
-        accentColor: Colors.redAccent,
+        secondaryHeaderColor: Colors.redAccent,
       ),
       home: PushyDemo(),
     );
@@ -141,6 +141,8 @@ class _PushyDemoState extends State<PushyDemo> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pushy'),
+        foregroundColor: Colors.white,
+        backgroundColor: Colors.grey[900]
       ),
       body: Builder(
         builder: (context) => Center(
