@@ -5,11 +5,11 @@ PODS:
     - MqttCocoaAsyncSocket (~> 1.0.8)
   - Flutter (1.0.0)
   - MqttCocoaAsyncSocket (1.0.8)
-  - Pushy (1.0.48):
+  - Pushy (1.0.53):
     - CocoaMQTT (= 2.1.0)
   - pushy_flutter (2.0.19):
     - Flutter
-    - Pushy (= 1.0.48)
+    - Pushy (= 1.0.53)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
@@ -31,8 +31,8 @@ SPEC CHECKSUMS:
   CocoaMQTT: 43666585403f664bb55361189c03c54897060324
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   MqttCocoaAsyncSocket: 77d3b74f76228dd5a05d1f9526eab101d415b30c
-  Pushy: c07f638ea2e40cac2198b01d41737579116379c2
-  pushy_flutter: e596885314f00272c65da5192c3fd5256c3b1127
+  Pushy: 037ac294aa91f08d0a8506494f822f58ac2f81ad
+  pushy_flutter: 6d098306e00a15af0166acd3adb7f70d2026ef2f
 
 PODFILE CHECKSUM: 4e8f8b2be68aeea4c0d5beb6ff1e79fface1d048
 
