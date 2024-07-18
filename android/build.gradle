@@ -22,7 +22,6 @@ rootProject.allprojects {
 apply plugin: 'com.android.library'
 
 android {
-    namespace 'me.pushy.sdk.flutter'
     compileSdkVersion 28
 
     defaultConfig {
