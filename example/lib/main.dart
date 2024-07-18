@@ -68,9 +68,6 @@ class _PushyDemoState extends State<PushyDemo> {
     // Set Pushy app ID (required for Web Push)
     Pushy.setAppId('550ee57c5b5d72117f51e801');
 
-    // Set custom notification icon (Android)
-    Pushy.setNotificationIcon('ic_notify');
-
     try {
       // Register the device for push notifications
       String deviceToken = await Pushy.register();

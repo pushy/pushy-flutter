@@ -3,12 +3,33 @@ package me.pushy.sdk.flutter.util;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 
 import me.pushy.sdk.flutter.config.PushyIntentExtras;
 
 public class PushyNotification {
     public static int getNotificationIcon(Context context) {
+        try {
+            // Try to query for app metadata
+            ApplicationInfo app = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+
+            // App metadata retrieved?
+            if (app != null && app.metaData != null) {
+                // Attempt to fetch icon name from <meta-data>
+                int iconResource = app.metaData.getInt("me.pushy.sdk.notification.icon");
+
+                // Is it defined?
+                if (iconResource > 0) {
+                    return iconResource;
+                }
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            // Ignore exceptions
+        }
+
+        // If failed, fallback to Pushy.setNotificationIcon()
         // Attempt to fetch icon name from SharedPreferences
         String icon = PushyPersistence.getNotificationIcon(context);
 

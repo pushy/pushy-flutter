@@ -33,6 +33,11 @@
 
         <!-- Pushy Declarations -->
 
+        <!-- Custom Notification Icon -->
+        <meta-data
+            android:name="me.pushy.sdk.notification.icon"
+            android:resource="@mipmap/ic_notify" />
+
         <!-- Internal Notification Receiver -->
         <!-- Do not modify - internal BroadcastReceiver that sends notifications to your Flutter app -->
         <receiver android:name="me.pushy.sdk.flutter.internal.PushyInternalReceiver" android:exported="false">
