@@ -43,7 +43,8 @@ import me.pushy.sdk.util.PushyStringUtils;
 import me.pushy.sdk.util.exceptions.PushyException;
 import me.pushy.sdk.flutter.util.PushyPersistence;
 
-public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHandler, PluginRegistry.NewIntentListener, EventChannel.StreamHandler {
+public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHandler, PluginRegistry.NewIntentListener,
+        EventChannel.StreamHandler {
     static Context mContext;
     static Activity mActivity;
     static EventChannel.EventSink mNotificationListener;
@@ -139,7 +140,7 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
         if (call.method.equals("setNotificationListener")) {
             setNotificationListener(call, result);
         }
-        
+
         // Check if device is registered
         if (call.method.equals("isRegistered")) {
             isRegistered(result);
@@ -153,6 +154,11 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
         // Subscribe device to topic
         if (call.method.equals("subscribe")) {
             subscribe(call, result);
+        }
+        
+        // Multi Topic Subscribe device to multiple topics
+        if (call.method.equals("multiTopicSubscribe")) {
+            multiTopicSubscribe(call, result);
         }
 
         // Unsubscribe device from topic
@@ -308,8 +314,7 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
                 try {
                     // Emit notification to listener
                     onNotificationReceived(notifications.getJSONObject(i), context);
-                }
-                catch (JSONException e) {
+                } catch (JSONException e) {
                     // Log error to logcat
                     Log.e(PushyLogging.TAG, "Failed to parse JSON object: " + e.getMessage(), e);
                 }
@@ -340,15 +345,16 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
                     // Start background isolate
                     PushyFlutterBackgroundExecutor.getSingletonInstance().startBackgroundIsolate(context);
 
-                    // Store notification JSON in SharedPreferences and deliver it when isolate ready
+                    // Store notification JSON in SharedPreferences and deliver it when isolate
+                    // ready
                     PushyPersistence.persistNotification(notification, context);
-                }
-                else {
+                } else {
                     // Log action
                     Log.d("Pushy", "Handling notification in Flutter background isolate");
 
                     // Run on background executor
-                    PushyFlutterBackgroundExecutor.getSingletonInstance().invokeDartNotificationHandler(notification, context);
+                    PushyFlutterBackgroundExecutor.getSingletonInstance().invokeDartNotificationHandler(notification,
+                            context);
                 }
             }
         });
@@ -365,6 +371,30 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
                 try {
                     // Attempt to subscribe the device to topic
                     Pushy.subscribe(args.get(0), mContext);
+
+                    // Resolve the callback with success
+                    success(result, "success");
+                } catch (Exception exc) {
+                    // Reject the callback with the exception
+                    error(result, exc.getMessage());
+                }
+            }
+        });
+    }
+
+    private void multiTopicSubscribe(final MethodCall call, final Result result) {
+        // Get arguments
+        final ArrayList<String> args = call.arguments();
+
+        final String[] argsArray = args.toArray(new String[0]);
+
+        // Run network I/O in background thread
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // Attempt to subscribe the device to lisr of topics
+                    Pushy.subscribe(argsArray, mContext);
 
                     // Resolve the callback with success
                     success(result, "success");
@@ -414,16 +444,18 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
         final ArrayList<Object> args = call.arguments();
 
         // Get callback handles as long (_isolate and notification handler)
-        long isolateCallback = (args.get(0) instanceof Long) ? (Long) args.get(0) : ((Integer)args.get(0)).longValue();
-        long notificationHandlerCallback = (args.get(1) instanceof Long) ? (Long) args.get(1) : ((Integer)args.get(1)).longValue();
+        long isolateCallback = (args.get(0) instanceof Long) ? (Long) args.get(0) : ((Integer) args.get(0)).longValue();
+        long notificationHandlerCallback = (args.get(1) instanceof Long) ? (Long) args.get(1)
+                : ((Integer) args.get(1)).longValue();
 
         // Start background isolate (if not already started)
         if (!PushyFlutterBackgroundExecutor.isRunning()) {
-            PushyFlutterBackgroundExecutor.getSingletonInstance().startBackgroundIsolate(mContext, isolateCallback, notificationHandlerCallback);
-        }
-        else {
+            PushyFlutterBackgroundExecutor.getSingletonInstance().startBackgroundIsolate(mContext, isolateCallback,
+                    notificationHandlerCallback);
+        } else {
             // Persist callback handles in SharedPreferences
-            PushyFlutterBackgroundExecutor.persistCallbackHandleIds(mContext, isolateCallback, notificationHandlerCallback);
+            PushyFlutterBackgroundExecutor.persistCallbackHandleIds(mContext, isolateCallback,
+                    notificationHandlerCallback);
         }
 
         // Return success
@@ -443,7 +475,7 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
         // Return success nonetheless
         success(result, "success");
     }
-    
+
     private void setJobServiceInterval(MethodCall call, Result result) {
         // Get arguments
         final ArrayList<Integer> args = call.arguments();
@@ -555,12 +587,13 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
                 .setContentTitle(title)
                 .setContentText(text)
                 .setAutoCancel(true)
-                .setVibrate(new long[]{0, 400, 250, 400})
+                .setVibrate(new long[] { 0, 400, 250, 400 })
                 .setContentIntent(PushyNotification.getMainActivityPendingIntent(mContext, payload))
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
 
         // Get an instance of the NotificationManager service
-        NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(mContext.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) mContext
+                .getSystemService(mContext.NOTIFICATION_SERVICE);
 
         // Automatically configure a Notification Channel for devices running Android O+
         Pushy.setNotificationChannel(builder, mContext);

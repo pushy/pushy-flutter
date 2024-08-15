@@ -73,6 +73,11 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         if (call.method == "subscribe") {
             subscribe(call, result: result)
         }
+
+        // Multi Topic Subscribe device to multiple topics
+        if (call.method == "multiTopicSubscribe") {
+            multiTopicSubscribe(call, result: result)
+        }
         
         // Unsubscribe device from topic
         if (call.method == "unsubscribe") {
@@ -270,6 +275,25 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         
         // Subscribe the device to a topic
         getPushyInstance().subscribe(topic: args[0], handler: { (error) in
+            // Handle errors
+            if error != nil {
+                // Send error to Flutter app
+                return result(FlutterError(code: "PUSHY ERROR",
+                                           message: String(describing: error!),
+                                           details: nil))
+            }
+            
+            // Success
+            result("success")
+        })
+    }
+
+    func multiTopicSubscribe(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        // Get arguments as list of strings
+        let args = call.arguments as! [String]
+        
+        // Subscribe the device to list of topics
+        getPushyInstance().subscribe(topics: args, handler: { (error) in
             // Handle errors
             if error != nil {
                 // Send error to Flutter app

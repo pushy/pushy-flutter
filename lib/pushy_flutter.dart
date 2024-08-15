@@ -1,10 +1,10 @@
-import 'dart:ui';
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui';
 
-import 'package:get/get.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 import './pushy_flutter_web.dart';
 
@@ -19,8 +19,7 @@ const String _backgroundChannelName = 'me.pushy.sdk.flutter/background';
 
 class Pushy {
   static const MethodChannel _channel = const MethodChannel(_methodChannelName);
-  static const EventChannel _eventChannel =
-      const EventChannel(_eventChannelName);
+  static const EventChannel _eventChannel = const EventChannel(_eventChannelName);
 
   static NotificationCallback? _notificationListener;
   static NotificationCallback? _notificationClickListener;
@@ -147,10 +146,7 @@ class Pushy {
     }
 
     // Register callback IDs with native app
-    _channel.invokeMethod('setNotificationListener', <dynamic>[
-      isolateCallback.toRawHandle(),
-      notificationHandlerCallback.toRawHandle()
-    ]);
+    _channel.invokeMethod('setNotificationListener', <dynamic>[isolateCallback.toRawHandle(), notificationHandlerCallback.toRawHandle()]);
   }
 
   static void setNotificationClickListener(NotificationCallback fn) {
@@ -159,8 +155,9 @@ class Pushy {
 
     // Any notifications pending?
     if (notificationClickQueue.length > 0) {
-      notificationClickQueue
-          .forEach((element) => {_notificationClickListener!(element)});
+      for (final element in notificationClickQueue) {
+        _notificationClickListener!(element);
+      }
 
       // Empty queue
       notificationClickQueue = [];
@@ -175,6 +172,20 @@ class Pushy {
 
     // Attempt to subscribe the device to topic
     return await _channel.invokeMethod('subscribe', <dynamic>[topic]);
+  }
+
+  static Future<void> multiTopicSubscribe(List<String> topics) async {
+    if (topics.isEmpty) {
+      return;
+    }
+
+    // Running on Web?
+    if (GetPlatform.isWeb) {
+      return PushyWebSDK.subscribe(topics);
+    }
+
+    // Attempt to subscribe the device to multiple topics
+    return await _channel.invokeMethod('multiTopicSubscribe', topics);
   }
 
   static Future<void> unsubscribe(String topic) async {
@@ -194,8 +205,7 @@ class Pushy {
     }
 
     // Invoke native method
-    _channel.invokeMethod(
-        'setEnterpriseConfig', <dynamic>[apiEndpoint, mqttEndpoint]);
+    _channel.invokeMethod('setEnterpriseConfig', <dynamic>[apiEndpoint, mqttEndpoint]);
   }
 
   static void toggleFCM(bool value) {
@@ -266,8 +276,7 @@ class Pushy {
     }
 
     // Query for Android battery optimization status
-    return (await _channel
-        .invokeMethod<bool>('isIgnoringBatteryOptimizations'))!;
+    return (await _channel.invokeMethod<bool>('isIgnoringBatteryOptimizations'))!;
   }
 
   static void launchBatteryOptimizationsActivity() {
@@ -284,8 +293,7 @@ class Pushy {
     }
 
     // Attempt to display native notification
-    _channel
-        .invokeMethod('notify', <dynamic>[title, message, json.encode(data)]);
+    _channel.invokeMethod('notify', <dynamic>[title, message, json.encode(data)]);
   }
 
   static Future<Object?> getDeviceCredentials() async {
@@ -303,14 +311,13 @@ class Pushy {
 
   static Future<String?> setDeviceCredentials(Map credentials) async {
     // Attempt to assign device credentials
-    return await _channel.invokeMethod<String>('setDeviceCredentials',
-        <dynamic>[credentials['token'], credentials['authKey']]);
+    return await _channel.invokeMethod<String>('setDeviceCredentials', <dynamic>[credentials['token'], credentials['authKey']]);
   }
 
   static void setAppId(String id) {
     // Store app ID for later (for Web SDK)
     appId = id;
-    
+
     // Not running on Web?
     if (!GetPlatform.isWeb) {
       // Invoke native method
@@ -326,8 +333,7 @@ void _isolate() {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize background method channel
-  const MethodChannel _channel =
-      MethodChannel(_backgroundChannelName, JSONMethodCodec());
+  const MethodChannel _channel = MethodChannel(_backgroundChannelName, JSONMethodCodec());
 
   // Listen for push notifications sent via the channel
   _channel.setMethodCallHandler((MethodCall call) async {
@@ -341,8 +347,7 @@ void _isolate() {
     final CallbackHandle handle = CallbackHandle.fromRawHandle(args[0]);
 
     // Get the actual notification callback function from handle
-    final Function? notificationCallback =
-        PluginUtilities.getCallbackFromHandle(handle);
+    final Function? notificationCallback = PluginUtilities.getCallbackFromHandle(handle);
 
     // Failed?
     if (notificationCallback == null) {
@@ -367,5 +372,4 @@ void _isolate() {
 }
 
 // Callback handle helper method
-_GetCallbackHandle _getCallbackHandle =
-    (Function callback) => PluginUtilities.getCallbackHandle(callback);
+_GetCallbackHandle _getCallbackHandle = (Function callback) => PluginUtilities.getCallbackHandle(callback);
