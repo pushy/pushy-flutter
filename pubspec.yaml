@@ -10,7 +10,6 @@ environment:
 
 dependencies:
   js: ^0.7.1
-  get: ^4.6.5
   universal_html: ^2.0.3
   flutter:
     sdk: flutter

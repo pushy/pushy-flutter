@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 
 import './pushy_flutter_web.dart';
 
@@ -30,7 +30,7 @@ class Pushy {
 
   static Future<String> register() async {
     // Running on Web?
-    if (GetPlatform.isWeb) {
+    if (kIsWeb) {
       return await PushyWebSDK.register(appId);
     }
 
@@ -40,7 +40,7 @@ class Pushy {
 
   static void listen() {
     // Android & iOS only
-    if (GetPlatform.isWeb) {
+    if (kIsWeb) {
       return;
     }
 
@@ -88,7 +88,7 @@ class Pushy {
 
   static Future<String> getAPNsToken() async {
     // iOS only
-    if (!GetPlatform.isIOS) {
+    if (kIsWeb || !Platform.isIOS) {
       return '';
     }
 
@@ -101,7 +101,7 @@ class Pushy {
 
   static Future<String> getFCMToken() async {
     // Android only
-    if (!GetPlatform.isAndroid) {
+    if (kIsWeb || !Platform.isAndroid) {
       return '';
     }
 
@@ -114,7 +114,7 @@ class Pushy {
 
   static Future<bool> isRegistered() async {
     // Running on Web?
-    if (GetPlatform.isWeb) {
+    if (kIsWeb) {
       return PushyWebSDK.isRegistered();
     }
 
@@ -127,7 +127,7 @@ class Pushy {
 
   static void setNotificationListener(NotificationCallback fn) {
     // Running on Web?
-    if (GetPlatform.isWeb) {
+    if (kIsWeb) {
       return PushyWebSDK.setNotificationListener(fn);
     }
 
@@ -166,7 +166,7 @@ class Pushy {
 
   static Future<void> subscribe(String topic) async {
     // Running on Web?
-    if (GetPlatform.isWeb) {
+    if (kIsWeb) {
       return PushyWebSDK.subscribe(topic);
     }
 
@@ -190,7 +190,7 @@ class Pushy {
 
   static Future<void> unsubscribe(String topic) async {
     // Running on Web?
-    if (GetPlatform.isWeb) {
+    if (kIsWeb) {
       return PushyWebSDK.unsubscribe(topic);
     }
 
@@ -200,7 +200,7 @@ class Pushy {
 
   static void setEnterpriseConfig(String apiEndpoint, String mqttEndpoint) {
     // Running on Web?
-    if (GetPlatform.isWeb) {
+    if (kIsWeb) {
       return PushyWebSDK.setEnterpriseConfig(apiEndpoint);
     }
 
@@ -210,28 +210,28 @@ class Pushy {
 
   static void toggleFCM(bool value) {
     // Invoke native method (Android only)
-    if (GetPlatform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       _channel.invokeMethod('toggleFCM', <dynamic>[value]);
     }
   }
 
   static void toggleMethodSwizzling(bool value) {
     // Invoke native method (iOS only)
-    if (GetPlatform.isIOS) {
+    if (!kIsWeb && Platform.isIOS) {
       _channel.invokeMethod('toggleMethodSwizzling', <dynamic>[value]);
     }
   }
 
   static void setCriticalAlertOption() {
     // Invoke native method (iOS only)
-    if (GetPlatform.isIOS) {
+    if (!kIsWeb && Platform.isIOS) {
       _channel.invokeMethod('setCriticalAlertOption');
     }
   }
 
   static void toggleInAppBanner(bool value) {
     // Invoke native method (iOS only)
-    if (GetPlatform.isIOS) {
+    if (!kIsWeb && Platform.isIOS) {
       _channel.invokeMethod('toggleInAppBanner', <dynamic>[value]);
     }
   }
@@ -243,7 +243,7 @@ class Pushy {
 
   static void setNotificationIcon(String resourceName) {
     // Android only
-    if (GetPlatform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       // Invoke native method
       _channel.invokeMethod('setNotificationIcon', <dynamic>[resourceName]);
     }
@@ -251,7 +251,7 @@ class Pushy {
 
   static void setJobServiceInterval(int resourceName) {
     // Android only
-    if (GetPlatform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       // Invoke native method
       _channel.invokeMethod('setJobServiceInterval', <dynamic>[resourceName]);
     }
@@ -264,14 +264,14 @@ class Pushy {
 
   static void clearBadge() {
     // Invoke native method (iOS only)
-    if (GetPlatform.isIOS) {
+    if (!kIsWeb && Platform.isIOS) {
       _channel.invokeMethod('clearBadge');
     }
   }
 
   static Future<bool> isIgnoringBatteryOptimizations() async {
     // Android-only feature
-    if (!GetPlatform.isAndroid) {
+    if (kIsWeb || !Platform.isAndroid) {
       return true;
     }
 
@@ -281,14 +281,14 @@ class Pushy {
 
   static void launchBatteryOptimizationsActivity() {
     // Invoke native method (Android only)
-    if (GetPlatform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       _channel.invokeMethod('launchBatteryOptimizationsActivity');
     }
   }
 
   static void notify(String title, String message, Map<String, dynamic> data) {
     // Android & iOS only
-    if (GetPlatform.isWeb) {
+    if (kIsWeb) {
       return;
     }
 
@@ -319,7 +319,7 @@ class Pushy {
     appId = id;
 
     // Not running on Web?
-    if (!GetPlatform.isWeb) {
+    if (!kIsWeb) {
       // Invoke native method
       _channel.invokeMethod('setAppId', <dynamic>[appId]);
     }

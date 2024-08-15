@@ -83,14 +83,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  get:
-    dependency: transitive
-    description:
-      name: get
-      sha256: e4e7335ede17452b391ed3b2ede016545706c01a02292a6c97619705e7d2a85e
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.6.6"
   html:
     dependency: transitive
     description:
@@ -169,7 +161,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "2.0.22"
+    version: "2.0.23"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -264,5 +256,5 @@ packages:
     source: hosted
     version: "14.2.1"
 sdks:
-  dart: ">=3.3.0 <4.0.0"
-  flutter: ">=3.18.0-18.0.pre.54"
+  dart: ">=3.2.0-0 <4.0.0"
+  flutter: ">=1.12.0"
