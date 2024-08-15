@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'dart:ui';
 
-import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import './pushy_flutter_web.dart';
@@ -180,7 +181,7 @@ class Pushy {
     }
 
     // Running on Web?
-    if (GetPlatform.isWeb) {
+    if (kIsWeb) {
       return PushyWebSDK.subscribe(topics);
     }
 
