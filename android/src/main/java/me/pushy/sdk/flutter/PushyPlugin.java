@@ -356,15 +356,23 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
 
     private void subscribe(final MethodCall call, final Result result) {
         // Get arguments
-        final ArrayList<String> args = call.arguments();
+        final ArrayList<Object> args = call.arguments();
 
         // Run network I/O in background thread
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    // Attempt to subscribe the device to topic
-                    Pushy.subscribe(args.get(0), mContext);
+                    // Single topic?
+                    if (args.get(0) instanceof String) {
+                        // Attempt to subscribe the device to topic
+                        Pushy.subscribe((String)args.get(0), mContext);
+                    }
+                    // Multiple topics?
+                    else if (args.get(0) instanceof ArrayList) {
+                        // Attempt to subscribe the device to multiple topics
+                        Pushy.subscribe(((ArrayList<String>)(args.get(0))).toArray(new String[0]), mContext);
+                    }
 
                     // Resolve the callback with success
                     success(result, "success");
@@ -378,15 +386,23 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
 
     private void unsubscribe(final MethodCall call, final Result result) {
         // Get arguments
-        final ArrayList<String> args = call.arguments();
+        final ArrayList<Object> args = call.arguments();
 
         // Run network I/O in background thread
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    // Attempt to unsubscribe the device from topic
-                    Pushy.unsubscribe(args.get(0), mContext);
+                    // Single topic?
+                    if (args.get(0) instanceof String) {
+                        // Attempt to unsubscribe the device from topic
+                        Pushy.unsubscribe((String)args.get(0), mContext);
+                    }
+                    // Multiple topics?
+                    else if (args.get(0) instanceof ArrayList) {
+                        // Attempt to unsubscribe the device from multiple topics
+                        Pushy.unsubscribe(((ArrayList<String>)(args.get(0))).toArray(new String[0]), mContext);
+                    }
 
                     // Resolve the callback with success
                     success(result, "success");

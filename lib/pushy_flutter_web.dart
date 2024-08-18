@@ -14,10 +14,10 @@ external dynamic isRegisteredJS();
 external void setNotificationListenerJS(Function callback);
 
 @JS('subscribe')
-external dynamic subscribeJS(String topic);
+external dynamic subscribeJS(dynamic topic);
 
 @JS('unsubscribe')
-external dynamic unsubscribeJS(String topic);
+external dynamic unsubscribeJS(dynamic topic);
 
 @JS('setEnterpriseConfig')
 external void setEnterpriseConfigJS(String endpoint);
