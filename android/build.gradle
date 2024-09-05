@@ -22,7 +22,10 @@ rootProject.allprojects {
 apply plugin: 'com.android.library'
 
 android {
-    namespace 'me.pushy.sdk.flutter'
+    if (android.hasProperty('namespace')){
+        namespace 'me.pushy.sdk.flutter'
+    }
+
     compileSdkVersion 31
 
     defaultConfig {
