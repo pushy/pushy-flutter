@@ -189,7 +189,7 @@ class Pushy {
     return await _channel.invokeMethod('unsubscribe', <dynamic>[topics]);
   }
 
-  static void setEnterpriseConfig(String apiEndpoint, String mqttEndpoint) {
+  static void setEnterpriseConfig(String? apiEndpoint, String? mqttEndpoint) {
     // Running on Web?
     if (kIsWeb) {
       return PushyWebSDK.setEnterpriseConfig(apiEndpoint);
