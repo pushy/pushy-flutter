@@ -38,5 +38,5 @@ android {
 
 dependencies {
     // Pushy Android SDK
-    implementation 'me.pushy:sdk:1.0.113'
+    implementation 'me.pushy:sdk:1.0.120'
 }
