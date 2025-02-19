@@ -18,7 +18,6 @@ import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.view.FlutterCallbackInformation;
-import io.flutter.view.FlutterMain;
 import me.pushy.sdk.config.PushyLogging;
 import me.pushy.sdk.flutter.PushyPlugin;
 import me.pushy.sdk.flutter.config.PushyChannels;
