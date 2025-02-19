@@ -162,7 +162,7 @@ class Pushy {
     // Any notifications pending?
     if (notificationClickQueue.length > 0) {
       notificationClickQueue
-          .forEach((element) => {_notificationClickListener!(element)});
+          .forEach((element) {_notificationClickListener!(element);});
 
       // Empty queue
       notificationClickQueue = [];
