@@ -164,6 +164,11 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
             toggleFCM(call, result);
         }
 
+        // Toggle foreground service support
+        if (call.method.equals("toggleForegroundService")) {
+            toggleForegroundService(call, result);
+        }
+
         // Get FCM fallback delivery token
         if (call.method.equals("getFCMToken")) {
             getFCMToken(result);
@@ -510,6 +515,20 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
 
         // Toggle FCM on/off
         Pushy.toggleFCM(value, mContext);
+
+        // Return success
+        success(result, "success");
+    }
+
+    private void toggleForegroundService(MethodCall call, Result result) {
+        // Get arguments
+        final ArrayList<Boolean> args = call.arguments();
+
+        // Get toggle value as bool
+        Boolean value = args.get(0);
+
+        // Toggle foreground service on/off
+        Pushy.toggleForegroundService(value, mContext);
 
         // Return success
         success(result, "success");

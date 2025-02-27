@@ -207,6 +207,13 @@ class Pushy {
     }
   }
 
+  static void toggleForegroundService(bool value) {
+    // Invoke native method (Android only)
+    if (!kIsWeb && Platform.isAndroid) {
+      _channel.invokeMethod('toggleForegroundService', <dynamic>[value]);
+    }
+  }
+
   static void toggleMethodSwizzling(bool value) {
     // Invoke native method (iOS only)
     if (!kIsWeb && Platform.isIOS) {
