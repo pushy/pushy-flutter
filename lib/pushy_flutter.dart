@@ -228,6 +228,13 @@ class Pushy {
     }
   }
 
+  static void setLocalPushConnectivityConfig(String endpoint, int port, int keepalive, List<String> ssids) {
+    // Invoke native method (iOS only)
+    if (!kIsWeb && Platform.isIOS) {
+      _channel.invokeMethod('setLocalPushConnectivityConfig', <dynamic>[endpoint, port, keepalive, ssids]);
+    }
+  }
+
   static void setCriticalAlertOption() {
     // Invoke native method (iOS only)
     if (!kIsWeb && Platform.isIOS) {

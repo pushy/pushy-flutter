@@ -109,6 +109,11 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
             toggleAPNs(call, result: result)
         }
         
+        // Configure Local Push Connectivity (Pushy Enterprise only)
+        if (call.method == "setLocalPushConnectivityConfig") {
+            setLocalPushConnectivityConfig(call, result: result)
+        }
+        
         // Clear app badge
         if (call.method == "clearBadge") {
             clearBadge(result)
@@ -393,6 +398,23 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         result("success")
     }
 
+    func setLocalPushConnectivityConfig(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        // Get arguments as list of bools
+        let args = call.arguments as! [Any?]
+        
+        // Pass values to Pushy SDK
+        if #available(iOS 14.0, *) {
+            // Check if Pushy/MQTT subspec has been imported
+            #if canImport(CocoaMQTT)
+                // Invoke method in PushyMQTT class
+                PushyMQTT.setLocalPushConnectivityConfig(endpoint: args[0] as? String, port: args[1] as? NSNumber, keepAlive: args[2] as? NSNumber, ssids: args[3] as? [String] )
+            #endif
+        }
+        
+        // Always success
+        result("success")
+    }
+    
     func setCriticalAlertOption(_ result: @escaping FlutterResult) {
         // iOS 12+ only
         if #available(iOS 12, *) {
