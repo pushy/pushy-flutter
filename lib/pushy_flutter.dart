@@ -221,6 +221,13 @@ class Pushy {
     }
   }
 
+  static void toggleAPNs(bool value) {
+    // Invoke native method (iOS only)
+    if (!kIsWeb && Platform.isIOS) {
+      _channel.invokeMethod('toggleAPNs', <dynamic>[value]);
+    }
+  }
+
   static void setCriticalAlertOption() {
     // Invoke native method (iOS only)
     if (!kIsWeb && Platform.isIOS) {

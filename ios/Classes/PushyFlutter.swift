@@ -104,7 +104,12 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
             toggleMethodSwizzling(call, result: result)
         }
         
-        // Pushy Enterprise support
+        // Toggle APNs integration (for Local Push Connectivity)
+        if (call.method == "toggleAPNs") {
+            toggleAPNs(call, result: result)
+        }
+        
+        // Clear app badge
         if (call.method == "clearBadge") {
             clearBadge(result)
         }
@@ -376,7 +381,18 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         // Always success
         result("success")
     }
-    
+
+    func toggleAPNs(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        // Get arguments as list of bools
+        let args = call.arguments as! [Bool?]
+        
+        // Pass value to Pushy SDK
+        getPushyInstance().toggleAPNs(args[0]!)
+        
+        // Always success
+        result("success")
+    }
+
     func setCriticalAlertOption(_ result: @escaping FlutterResult) {
         // iOS 12+ only
         if #available(iOS 12, *) {
