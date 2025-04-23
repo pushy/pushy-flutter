@@ -316,7 +316,7 @@ class Pushy {
         <dynamic>[credentials['token'], credentials['authKey']]);
   }
 
-  static void setAppId(String id) {
+  static void setAppId(String? id) {
     // Store app ID for later (for Web SDK)
     appId = id;
     
