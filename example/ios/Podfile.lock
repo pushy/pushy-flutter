@@ -1,7 +1,7 @@
 PODS:
   - Flutter (1.0.0)
   - Pushy (1.0.59)
-  - pushy_flutter (2.0.30):
+  - pushy_flutter (2.0.31):
     - Flutter
     - Pushy (= 1.0.59)
 
@@ -22,8 +22,8 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   Pushy: 66d81a307ff884be0b9cf1a9d2c4d64332b4d384
-  pushy_flutter: 29e77a4a5cacaf83a19ae053bc1b22063e4d4b7f
+  pushy_flutter: 8b89f78892dfdf0cad350c39483ae88b5591cd2e
 
-PODFILE CHECKSUM: 510b8901b12697bc592c16059de6b806033b4ce7
+PODFILE CHECKSUM: 0f2767faf1320bf88bbf3769df8082f6edf40063
 
 COCOAPODS: 1.16.2

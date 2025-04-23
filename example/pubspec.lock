@@ -87,10 +87,10 @@ packages:
     dependency: transitive
     description:
       name: html
-      sha256: "1fc58edeaec4307368c60d59b7e15b9d658b57d7f3125098b6294153c75337ec"
+      sha256: "9475be233c437f0e3637af55e7702cbbe5c23a68bd56e8a5fa2d426297b7c6c8"
       url: "https://pub.dev"
     source: hosted
-    version: "0.15.5"
+    version: "0.15.5+1"
   js:
     dependency: transitive
     description:
@@ -161,7 +161,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "2.0.30"
+    version: "2.0.31"
   sky_engine:
     dependency: transitive
     description: flutter
