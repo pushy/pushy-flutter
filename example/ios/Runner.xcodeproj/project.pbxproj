@@ -261,15 +261,11 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh",
-				"${BUILT_PRODUCTS_DIR}/CocoaMQTT/CocoaMQTT.framework",
-				"${BUILT_PRODUCTS_DIR}/MqttCocoaAsyncSocket/MqttCocoaAsyncSocket.framework",
 				"${BUILT_PRODUCTS_DIR}/Pushy/Pushy.framework",
 				"${BUILT_PRODUCTS_DIR}/pushy_flutter/pushy_flutter.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/CocoaMQTT.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/MqttCocoaAsyncSocket.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Pushy.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/pushy_flutter.framework",
 			);
