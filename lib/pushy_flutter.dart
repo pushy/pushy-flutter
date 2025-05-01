@@ -8,7 +8,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 
-import './pushy_flutter_web.dart';
+import './pushy_flutter_web_stub.dart'
+    if (dart.library.js_interop) './pushy_flutter_web.dart';
 
 // Type definitions for helpers
 typedef void NotificationCallback(Map<String, dynamic> data);

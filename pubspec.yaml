@@ -9,7 +9,6 @@ environment:
   flutter: ">=1.12.0"
 
 dependencies:
-  js: ^0.7.1
   universal_html: ^2.0.3
   flutter:
     sdk: flutter

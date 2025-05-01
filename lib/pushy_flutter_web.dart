@@ -1,26 +1,29 @@
 @JS('Pushy')
 library pushy_flutter_web;
 
-import 'web/js.dart';
+import 'dart:js_interop';
 import 'package:universal_html/js_util.dart';
 
 @JS('register')
-external dynamic registerJS(dynamic obj);
+external JSAny registerJS(JSAny obj);
 
 @JS('isRegistered')
-external dynamic isRegisteredJS();
+external JSAny isRegisteredJS();
 
 @JS('setNotificationListener')
-external void setNotificationListenerJS(Function callback);
+external void setNotificationListenerJS(JSFunction callback);
 
 @JS('subscribe')
-external dynamic subscribeJS(dynamic topic);
+external JSAny subscribeJS(JSAny topic);
 
 @JS('unsubscribe')
-external dynamic unsubscribeJS(dynamic topic);
+external JSAny unsubscribeJS(JSAny topic);
 
 @JS('setEnterpriseConfig')
 external void setEnterpriseConfigJS(String endpoint);
+
+// Define notification listener callback function and its params
+typedef NotificationCallback = void Function(Map<String, JSAny>);
 
 class PushyWebSDK {
   // Convert JS promise to future
@@ -48,12 +51,26 @@ class PushyWebSDK {
     return setEnterpriseConfigJS(endpoint);
   }
 
-  // Convert JS callback into Dart callback 
-  static void setNotificationListener(Function callback) {
-    // Allow interop permits JS engine to execute Dart callback function
-    setNotificationListenerJS(allowInterop((dynamic data) {
-      // Invoke app notification listener (convert JS object into Dart Map)
-      callback(Map<String, dynamic>.from(dartify(data) as Map));
-    }));
+  // Notification received listener
+  static void setNotificationListener(NotificationCallback callback) {
+    // Save Dart callback for later
+    _dartCallback = callback;
+
+    // Exported function passed to JS
+    setNotificationListenerJS(_jsCallback.toJS);
+  }
+}
+
+// Store handle to Dart callback
+late NotificationCallback _dartCallback;
+
+void _jsCallback(JSAny data) {
+  // Convert JS object into Dart Map
+  final dartData = dartify(data);
+
+  // Success?
+  if (dartData is Map) {
+    // Invoke Dart notification listener
+    _dartCallback(Map<String, JSAny>.from(dartData));
   }
 }
