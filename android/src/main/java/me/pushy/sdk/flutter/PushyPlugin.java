@@ -1,17 +1,17 @@
 package me.pushy.sdk.flutter;
 
 import android.app.Activity;
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.media.RingtoneManager;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.provider.Settings;
 import android.os.PowerManager;
+
+import androidx.core.app.NotificationCompat;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -19,6 +19,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.Executors;
 
 import androidx.annotation.NonNull;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -32,6 +33,7 @@ import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry;
 
 import me.pushy.sdk.flutter.config.PushyChannels;
+import me.pushy.sdk.config.PushyNotificationChannel;
 import me.pushy.sdk.Pushy;
 import me.pushy.sdk.config.PushyLogging;
 import me.pushy.sdk.flutter.util.PushyFlutterBackgroundExecutor;
@@ -227,7 +229,7 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
 
     private void register(final Result result) {
         // Run network I/O in background thread
-        AsyncTask.execute(new Runnable() {
+        Executors.newSingleThreadExecutor().execute(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -263,7 +265,7 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
         final PushyDeviceCredentials credentials = new PushyDeviceCredentials(args.get(0), args.get(1));
 
         // Run network I/O in background thread
-        AsyncTask.execute(new Runnable() {
+        Executors.newSingleThreadExecutor().execute(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -364,7 +366,7 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
         final ArrayList<Object> args = call.arguments();
 
         // Run network I/O in background thread
-        AsyncTask.execute(new Runnable() {
+        Executors.newSingleThreadExecutor().execute(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -395,7 +397,7 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
         final ArrayList<Object> args = call.arguments();
 
         // Run network I/O in background thread
-        AsyncTask.execute(new Runnable() {
+        Executors.newSingleThreadExecutor().execute(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -538,7 +540,7 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
 
     private void getFCMToken(final Result result) {
         // Run synchronous operation in background thread
-        AsyncTask.execute(new Runnable() {
+        Executors.newSingleThreadExecutor().execute(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -586,7 +588,7 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
         String payload = args.get(2);
 
         // Prepare a notification with vibration, sound and lights
-        Notification.Builder builder = new Notification.Builder(mContext)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext, PushyNotificationChannel.CHANNEL_ID)
                 .setSmallIcon(PushyNotification.getNotificationIcon(mContext))
                 .setContentTitle(title)
                 .setContentText(text)
