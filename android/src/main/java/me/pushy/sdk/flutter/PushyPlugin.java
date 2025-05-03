@@ -358,6 +358,7 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
         });
     }
 
+    @SuppressWarnings("unchecked")
     private void subscribe(final MethodCall call, final Result result) {
         // Get arguments
         final ArrayList<Object> args = call.arguments();
@@ -388,6 +389,7 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
         });
     }
 
+    @SuppressWarnings("unchecked")
     private void unsubscribe(final MethodCall call, final Result result) {
         // Get arguments
         final ArrayList<Object> args = call.arguments();
