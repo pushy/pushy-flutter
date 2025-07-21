@@ -414,18 +414,6 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         // Enable/disable in-app notification banners (iOS 10+)
         getPushyInstance().toggleInAppBanner(toggle)
         
-        // iOS 10+ only
-        if #available(iOS 10.0, *) {
-            // Toggled off? (after previously being toggled on)
-            if (!toggle) {
-                // Reset UNUserNotificationCenterDelegate to nil to avoid displaying banner
-                UNUserNotificationCenter.current().delegate = nil
-            } else {
-                // Set UNUserNotificationCente delegate so in-app banners are displayed
-                UNUserNotificationCenter.current().delegate = getPushyInstance()
-            }
-        }
-        
         // Always success
         result("success")
     }
