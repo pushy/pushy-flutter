@@ -312,6 +312,17 @@ class Pushy {
         .invokeMethod('notify', <dynamic>[title, message, json.encode(data)]);
   }
 
+  static void showInAppNotification(String title, String message, Map<String, dynamic> data) {
+    // iOS only
+    if (!Platform.isIOS) {
+      return;
+    }
+
+    // Attempt to display native iOS notification
+    _channel
+        .invokeMethod('showInAppNotification', <dynamic>[title, message, json.encode(data)]);
+  }
+
   static Future<Object?> getDeviceCredentials() async {
     // Fetch device credentials as list
     List? result = await _channel.invokeMethod<List>('getDeviceCredentials');

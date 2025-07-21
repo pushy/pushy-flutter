@@ -84,6 +84,11 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
             notify(call, result: result)
         }
         
+        // Display an in-app notification
+        if (call.method == "showInAppNotification") {
+            showInAppNotification(call, result: result)
+        }
+        
         // Toggle in-app notification banners (iOS 10+)
         if (call.method == "toggleInAppBanner") {
             toggleInAppBanner(call, result: result)
@@ -269,6 +274,55 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         
         // Show the alert dialog
         UIApplication.shared.delegate?.window??.rootViewController?.present(alert, animated: true, completion: nil)
+        
+        // Success
+        result("success")
+    }
+    
+    func showInAppNotification(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        // Get arguments as list of strings
+        let args = call.arguments as! [String]
+        
+        // Create a content object
+        let content = UNMutableNotificationContent()
+        
+        // Set title
+        content.title = args[0]
+        
+        // Set message
+        content.body = args[1]
+                
+        // Set default sound
+        content.sound = .default
+        
+        // Convert payload data to JSON
+        if let data = args[2].data(using: .utf8) {
+            do {
+                // Decode UTF-8 string into JSON
+                let payload = try JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
+                
+                // Call the incoming notification handler
+                content.userInfo = payload
+                
+                // Add flag to avoid blocking this notification
+                content.userInfo["_pushyInAppNotification"] = true
+            }
+            catch {
+                // Log errors to console
+                print("Pushy: Error parsing JSON")
+            }
+        }
+        
+        // Create a request to display a local notification
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        
+        // Display the notification
+        UNUserNotificationCenter.current().add(request) { error in
+            // Log errors to console
+            if let error = error {
+                print("Pushy: Error posting local notification: \(error)")
+            }
+        }
         
         // Success
         result("success")
