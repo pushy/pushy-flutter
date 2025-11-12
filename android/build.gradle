@@ -39,4 +39,7 @@ android {
 dependencies {
     // Pushy Android SDK
     implementation 'me.pushy:sdk:1.0.123'
+
+    // AndroidX PreferenceManager
+    implementation 'androidx.preference:preference:1.2.1'
 }
