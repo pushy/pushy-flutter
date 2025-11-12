@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name                  = 'pushy_flutter'
-  s.version               = '2.0.39'
+  s.version               = '2.0.40'
   s.summary               = 'The official Pushy SDK for Flutter iOS apps.'
   s.description           = 'Pushy is the most reliable push notification gateway, perfect for real-time, mission-critical applications.'
   s.homepage              = 'https://pushy.me/'
