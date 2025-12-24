@@ -2,7 +2,6 @@
 library pushy_flutter_web;
 
 import 'dart:js_interop';
-import 'package:universal_html/js_util.dart';
 
 @JS('register')
 external JSAny registerJS(JSAny obj);
@@ -28,22 +27,26 @@ typedef NotificationCallback = void Function(Map<String, JSAny>);
 class PushyWebSDK {
   // Convert JS promise to future
   static Future<String> register(String appId) async {
-    return await promiseToFuture(registerJS(jsify({'appId': appId})));
+    final obj = <String, Object>{'appId': appId}.jsify() as JSAny;
+    final promise = registerJS(obj) as JSPromise;
+    return (await promise.toDart) as String;
   }
 
   // Convert JS promise to future
-  static Future<void> subscribe(topic) async {
-    return await promiseToFuture(subscribeJS(topic));
+  static Future<void> subscribe(String topic) async {
+    final promise = subscribeJS(topic.toJS) as JSPromise;
+    await promise.toDart;
   }
 
   // Convert JS promise to future
-  static Future<void> unsubscribe(topic) async {
-    return await promiseToFuture(unsubscribeJS(topic));
+  static Future<void> unsubscribe(String topic) async {
+    final promise = unsubscribeJS(topic.toJS) as JSPromise;
+    await promise.toDart;
   }
 
   // Convert non-null to bool
   static Future<bool> isRegistered() async {
-    return !(isRegisteredJS() == Null);
+    return isRegisteredJS().isDefinedAndNotNull;
   }
 
   // Pushy Enterprise support
@@ -66,7 +69,7 @@ late NotificationCallback _dartCallback;
 
 void _jsCallback(JSAny data) {
   // Convert JS object into Dart Map
-  final dartData = dartify(data);
+  final dartData = (data as JSObject).dartify();
 
   // Success?
   if (dartData is Map) {
