@@ -7,6 +7,7 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
     var eventSink: FlutterEventSink?
     var hasStartupNotification = false
     var startupNotification: [AnyHashable : Any]?
+
     // Queue to store notification clicks that arrive before Flutter is ready
     var pendingNotificationClicks: [[AnyHashable : Any]] = []
     
@@ -14,6 +15,20 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         // Note: Removed the iOS 14 debug check that prevented plugin initialization
         // when not attached to Xcode debugger. This was causing notifications to be
         // lost when the app was launched from a killed state via notification tap.
+        
+        // On iOS 14+, Flutter apps built in the Debug scheme
+        // Need to be attached to the Xcode debugger
+        // 
+        // https://github.com/flutter/flutter/issues/66422#issuecomment-697972897
+        // if #available(iOS 14, *) {
+        //     // Built in Debug mode?
+        //     #if DEBUG
+        //         // Avoid plugin initialization if Xcode debugger is not attached
+        //         if (getppid() == 1) {
+        //             return
+        //         }
+        //     #endif
+        // }
         
         // Register a method channel that the Flutter app may invoke
         let channel = FlutterMethodChannel(name: PushyChannels.methodChannel, binaryMessenger: registrar.messenger())
@@ -187,10 +202,11 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         
         // Process any pending notification clicks that were queued before Flutter was ready
         if !self.pendingNotificationClicks.isEmpty {
-            print("Pushy: Processing \(self.pendingNotificationClicks.count) pending notification click(s)")
+            // Process all pending notifications
             for pendingClick in self.pendingNotificationClicks {
                 self.sendNotificationClickToFlutter(pendingClick)
             }
+
             // Clear the queue after processing
             self.pendingNotificationClicks.removeAll()
         }
@@ -199,6 +215,7 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         if self.hasStartupNotification {
             // Execute click notification handler
             self.notificationClickListener(userInfo: self.startupNotification!)
+            
             // Clear to avoid duplicate delivery
             self.hasStartupNotification = false
         }
@@ -263,8 +280,9 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         
         // If eventSink is not ready yet, queue the notification for later delivery
         if self.eventSink == nil {
-            print("Pushy: Event sink not ready, queuing notification click for later delivery")
+            // Store in pending click queue
             self.pendingNotificationClicks.append(data)
+
             // Also store as startup notification for backward compatibility
             self.storeStartupNotification(userInfo)
             return
@@ -309,7 +327,7 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         content.body = args[1]
                 
         // Set default sound
-        content.sound = .default
+        content.sound = .default()
         
         // Convert payload data to JSON
         if let data = args[2].data(using: .utf8) {
