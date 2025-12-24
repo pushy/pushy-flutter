@@ -7,13 +7,25 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
     var eventSink: FlutterEventSink?
     var hasStartupNotification = false
     var startupNotification: [AnyHashable : Any]?
-    // Queue to store notification clicks that arrive before Flutter is ready
-    var pendingNotificationClicks: [[AnyHashable : Any]] = []
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         // Note: Removed the iOS 14 debug check that prevented plugin initialization
         // when not attached to Xcode debugger. This was causing notifications to be
         // lost when the app was launched from a killed state via notification tap.
+
+        // On iOS 14+, Flutter apps built in the Debug scheme
+        // Need to be attached to the Xcode debugger
+        // 
+        // https://github.com/flutter/flutter/issues/66422#issuecomment-697972897
+        // if #available(iOS 14, *) {
+        //     // Built in Debug mode?
+        //     #if DEBUG
+        //         // Avoid plugin initialization if Xcode debugger is not attached
+        //         if (getppid() == 1) {
+        //             return
+        //         }
+        //     #endif
+        // }
         
         // Register a method channel that the Flutter app may invoke
         let channel = FlutterMethodChannel(name: PushyChannels.methodChannel, binaryMessenger: registrar.messenger())
@@ -185,44 +197,17 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         // Set notification click listener to our own
         getPushyInstance().setNotificationClickListener(self.notificationClickListener)
         
-        // Process any pending notification clicks that were queued before Flutter was ready
-        if !self.pendingNotificationClicks.isEmpty {
-            print("Pushy: Processing \(self.pendingNotificationClicks.count) pending notification click(s)")
-            for pendingClick in self.pendingNotificationClicks {
-                self.sendNotificationClickToFlutter(pendingClick)
-            }
-            // Clear the queue after processing
-            self.pendingNotificationClicks.removeAll()
-        }
-        
-        // Check for startup notification if exists (backward compatibility)
+        // Check for startup notification if exists
         if self.hasStartupNotification {
             // Execute click notification handler
             self.notificationClickListener(userInfo: self.startupNotification!)
+
             // Clear to avoid duplicate delivery
             self.hasStartupNotification = false
         }
         
         // Nil means success
         return nil
-    }
-    
-    // Helper method to send notification click data to Flutter
-    private func sendNotificationClickToFlutter(_ data: [AnyHashable : Any]) {
-        // Convert to JSON (stringified)
-        let json: String
-        
-        do {
-            // Attempt to serialize into JSON string
-            json = String(bytes: try JSONSerialization.data(withJSONObject: data, options: []), encoding: String.Encoding.utf8) ?? ""
-        }
-        catch let err {
-            print("Pushy: Error serializing notification click data: \(err.localizedDescription)")
-            return
-        }
-        
-        // Send JSON data to Flutter app
-        self.eventSink?(json)
     }
     
     func notificationHandler(data: [AnyHashable : Any], completionHandler: ((UIBackgroundFetchResult) -> Void)) {
@@ -261,17 +246,23 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         // Print notification payload data
         print("Clicked notification: \(data)")
         
-        // If eventSink is not ready yet, queue the notification for later delivery
-        if self.eventSink == nil {
-            print("Pushy: Event sink not ready, queuing notification click for later delivery")
-            self.pendingNotificationClicks.append(data)
-            // Also store as startup notification for backward compatibility
-            self.storeStartupNotification(userInfo)
+        // Convert to JSON (stringified)
+        let json: String
+        
+        do {
+            // Attempt to serialize into JSON string
+            json = String(bytes: try JSONSerialization.data(withJSONObject: data, options: []), encoding: String.Encoding.utf8) ?? ""
+        }
+        catch let err {
+            // Throw err
+            self.eventSink?(FlutterError(code: "PUSHY ERROR",
+                                         message: err.localizedDescription,
+                                         details: nil))
             return
         }
         
-        // Send to Flutter using the helper method
-        self.sendNotificationClickToFlutter(data)
+        // Send JSON data to Flutter app
+        self.eventSink?(json)
     }
     
     func notify(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
