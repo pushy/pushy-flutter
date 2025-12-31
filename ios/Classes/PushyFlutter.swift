@@ -327,7 +327,7 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         content.body = args[1]
                 
         // Set default sound
-        content.sound = .default()
+        content.sound = .default
         
         // Convert payload data to JSON
         if let data = args[2].data(using: .utf8) {
