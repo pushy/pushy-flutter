@@ -10,7 +10,9 @@ Thanks to the following people who have contributed code:
 
 | Name | GitHub | Contributions |
 |------|--------|---------------|
+| **dballance** | [@dballance](https://github.com/dballance) | Bump compileSdk to 34 (merged in PR #102) |
 | **artixtic** | [@artixtic](https://github.com/artixtic) | Resolved Swift compiler issue by updating PushyFlutter.swift (merged in PR #101) |
+
 
 ---
 
