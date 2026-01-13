@@ -26,7 +26,7 @@ android {
         namespace 'me.pushy.sdk.flutter'
     }
 
-    compileSdkVersion 31
+    compileSdkVersion 34
 
     defaultConfig {
         minSdkVersion 16
