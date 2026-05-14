@@ -168,26 +168,30 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
     func getPushyInstance() -> Pushy {
         // Pushy instance singleton
         if pushy == nil {
-            pushy = Pushy(UIApplication.shared)
+            pushy = MainActor.assumeIsolated {
+                Pushy(UIApplication.shared)
+            }
         }
         
         return pushy!
     }
     
     func register(_ result: @escaping FlutterResult) {
-        // Register the device for push notifications
-        getPushyInstance().register({ (error, deviceToken) in
-            // Handle registration errors
-            if error != nil {
-                // Send error to Flutter app
-                return result(FlutterError(code: "PUSHY ERROR",
-                                           message: String(describing: error!),
-                                           details: nil))
-            }
-            
-            // Send device token to Flutter app
-            result(deviceToken)
-        })
+        Task { @MainActor in
+            // Register the device for push notifications
+            getPushyInstance().register({ (error, deviceToken) in
+                // Handle registration errors
+                if error != nil {
+                    // Send error to Flutter app
+                    return result(FlutterError(code: "PUSHY ERROR",
+                                               message: String(describing: error!),
+                                               details: nil))
+                }
+                
+                // Send device token to Flutter app
+                result(deviceToken)
+            })
+        }
     }
     
     public func onListen(withArguments arguments: Any?, eventSink: @escaping FlutterEventSink) -> FlutterError? {
@@ -401,11 +405,13 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
     }
     
     func isRegistered(_ result: @escaping FlutterResult) {
-        // Check whether the device is registered
-        let isRegistered = getPushyInstance().isRegistered()
-        
-        // Send result to Flutter app
-        result(isRegistered ? "true" : "false")
+        Task { @MainActor in
+            // Check whether the device is registered
+            let isRegistered = getPushyInstance().isRegistered()
+            
+            // Send result to Flutter app
+            result(isRegistered ? "true" : "false")
+        }
     }
 
     func getAPNsToken(_ result: @escaping FlutterResult) {

@@ -5,8 +5,8 @@ homepage: https://pushy.me/
 repository: https://github.com/pushy/pushy-flutter
 
 environment:
-  sdk: '>=2.12.0 <4.0.0'
-  flutter: ">=1.12.0"
+  sdk: ^3.11.0
+  flutter: ">=3.41.0"
 
 dependencies:
   universal_html: ^2.0.3

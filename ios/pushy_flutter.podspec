@@ -9,8 +9,7 @@ Pod::Spec.new do |s|
   s.license               = { :type => 'Apache-2.0', :file => 'LICENSE' }
 
   s.source                = { :path => '.' }
-  s.source_files          = 'Classes/**/*'
-  s.public_header_files   = 'Classes/**/*.h'
+  s.source_files          = 'pushy_flutter/Sources/**/*.swift'
 
   s.dependency 'Flutter'
   s.dependency 'Pushy', '1.0.63'

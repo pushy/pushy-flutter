@@ -12,3 +12,6 @@ flutter_export_environment.sh
 .last_build_id
 Flutter.podspec
 .cxx/
+
+.build/
+.swiftpm/
