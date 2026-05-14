@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
   s.source_files          = 'pushy_flutter/Sources/**/*.swift'
 
   s.dependency 'Flutter'
-  s.dependency 'Pushy', '1.0.63'
+  s.dependency 'Pushy', '1.0.65'
 
   s.ios.deployment_target = '9.0'
 end
