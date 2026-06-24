@@ -32,8 +32,17 @@ public class PushyPersistence {
         // Add new notification
         pendingNotifications.put(notification);
 
-        // Store notification JSON array in SharedPreferences
-        getSettings(context).edit().putString(PushyPersistence.PENDING_NOTIFICATIONS, pendingNotifications.toString()).commit();
+        try {
+            // Store notification JSON array in SharedPreferences
+            getSettings(context).edit().putString(PushyPersistence.PENDING_NOTIFICATIONS, pendingNotifications.toString()).commit();
+        }
+        catch (OutOfMemoryError e) {
+            // Log error to logcat
+            Log.e(PushyLogging.TAG, "Failed to persist JSON array:" + e.getMessage(), e);
+
+            // Clear pending notifications
+            clearPendingNotifications(context);
+        }
     }
 
     public static void setNotificationIcon(String icon, Context context) {
