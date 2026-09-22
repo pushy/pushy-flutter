@@ -131,6 +131,11 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
             clearBadge(result)
         }
 
+        // Clear locally persisted device credentials
+        if (call.method == "clearDeviceCredentials") {
+            clearDeviceCredentials(result)
+        }
+
         // Change Pushy App ID
         if (call.method == "setAppId") {
             setAppId(call, result: result)
@@ -515,6 +520,14 @@ public class PushyFlutter: NSObject, FlutterPlugin, FlutterStreamHandler {
         // Clear app badge
         UIApplication.shared.applicationIconBadgeNumber = 0;
         
+        // Always success
+        result("success")
+    }
+
+    func clearDeviceCredentials(_ result: @escaping FlutterResult) {
+        // Clear stored device token and auth key
+        getPushyInstance().clearDeviceCredentials()
+
         // Always success
         result("success")
     }

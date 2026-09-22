@@ -342,6 +342,17 @@ class Pushy {
         <dynamic>[credentials['token'], credentials['authKey']]);
   }
 
+  static void clearDeviceCredentials() {
+    // Android & iOS only
+    if (kIsWeb) {
+      // Web SDK has no local device credentials to clear
+      return;
+    }
+
+    // Clear locally persisted device token and auth key
+    _channel.invokeMethod('clearDeviceCredentials');
+  }
+
   static void setAppId(String? id) {
     // Store app ID for later (for Web SDK)
     appId = id;

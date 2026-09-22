@@ -39,6 +39,7 @@ import me.pushy.sdk.config.PushyLogging;
 import me.pushy.sdk.flutter.util.PushyFlutterBackgroundExecutor;
 import me.pushy.sdk.flutter.util.PushyNotification;
 import me.pushy.sdk.model.PushyDeviceCredentials;
+import me.pushy.sdk.util.PushyAuthentication;
 import me.pushy.sdk.flutter.config.PushyIntentExtras;
 import me.pushy.sdk.util.PushyStringUtils;
 import me.pushy.sdk.util.exceptions.PushyException;
@@ -211,6 +212,11 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
             setDeviceCredentials(call, result);
         }
 
+        // Clear locally persisted device credentials
+        if (call.method.equals("clearDeviceCredentials")) {
+            clearDeviceCredentials(result);
+        }
+
         // Check whether app whitelisted from battery optimizations
         if (call.method.equals("isIgnoringBatteryOptimizations")) {
             isIgnoringBatteryOptimizations(result);
@@ -255,6 +261,14 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
 
         // Resolve the promise with credentials
         success(result, list);
+    }
+
+    private void clearDeviceCredentials(final Result result) {
+        // Clear token and auth key from local storage
+        PushyAuthentication.clearDeviceCredentials(mContext);
+
+        // Return success
+        success(result, "success");
     }
 
     private void setDeviceCredentials(final MethodCall call, final Result result) {
