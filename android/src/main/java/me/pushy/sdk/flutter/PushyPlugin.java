@@ -202,6 +202,11 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
             setJobServiceInterval(call, result);
         }
 
+        // Custom device ID support
+        if (call.method.equals("setCustomDeviceId")) {
+            setCustomDeviceId(call, result);
+        }
+
         // Device credential retrieval support
         if (call.method.equals("getDeviceCredentials")) {
             getDeviceCredentials(result);
@@ -491,6 +496,20 @@ public class PushyPlugin implements FlutterPlugin, ActivityAware, MethodCallHand
 
         // Modify JobService interval
         Pushy.setJobServiceInterval(interval, mActivity);
+
+        // Return success
+        success(result, "success");
+    }
+
+    private void setCustomDeviceId(MethodCall call, Result result) {
+        // Get arguments
+        final ArrayList<String> args = call.arguments();
+
+        // Get custom device ID
+        String deviceId = args.get(0);
+
+        // Assign custom device ID
+        Pushy.setCustomDeviceId(deviceId, mContext);
 
         // Return success
         success(result, "success");

@@ -271,6 +271,14 @@ class Pushy {
     }
   }
 
+  static void setCustomDeviceId(String deviceId) {
+    // Android only
+    if (!kIsWeb && Platform.isAndroid) {
+      // Invoke native method
+      _channel.invokeMethod('setCustomDeviceId', <dynamic>[deviceId]);
+    }
+  }
+
   static void setHeartbeatInterval(int resourceName) {
     // Invoke native method
     _channel.invokeMethod('setHeartbeatInterval', <dynamic>[resourceName]);
